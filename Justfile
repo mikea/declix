@@ -11,7 +11,7 @@ setup: install-pkl install-pkl-gen-go
 gen: pkl-gen-go
 
 run:
-    export PATH=$(pwd)/bin:$PATH && go run . --file local/poweredge.pkl
+    export PATH=$(pwd)/bin:$PATH && go run . --file local/hamd.pkl
 
 [private]
 install-pkl:
