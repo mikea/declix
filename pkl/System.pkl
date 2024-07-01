@@ -1,0 +1,17 @@
+@go.Package { name = "github.com/mikea/declix/system" }
+module mikea.declix.System
+
+import "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.7.0#/go.pkl" 
+
+ssh: SshConfig
+packages: Listing<Package>
+
+class Package {
+    name: String
+}
+
+class SshConfig {
+    address: String
+    user: String
+    privateKey: String
+}
