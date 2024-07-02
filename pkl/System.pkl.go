@@ -1,5 +1,5 @@
 // Code generated from Pkl module `mikea.declix.System`. DO NOT EDIT.
-package system
+package pkl
 
 import (
 	"context"
@@ -11,6 +11,8 @@ type System struct {
 	Ssh *SshConfig `pkl:"ssh"`
 
 	Packages []*Package `pkl:"packages"`
+
+	Resources []any `pkl:"resources"`
 }
 
 // LoadFromPath loads the pkl module at the given path and evaluates it into a System

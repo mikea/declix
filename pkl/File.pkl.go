@@ -1,6 +1,6 @@
 // Code generated from Pkl module `mikea.declix.System`. DO NOT EDIT.
-package system
+package pkl
 
-type Package struct {
-	Name string `pkl:"name"`
+type File struct {
+	Path string `pkl:"path"`
 }

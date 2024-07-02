@@ -1,13 +1,19 @@
-@go.Package { name = "github.com/mikea/declix/system" }
+@go.Package { name = "github.com/mikea/declix/pkl" }
 module mikea.declix.System
 
 import "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.7.0#/go.pkl" 
 
 ssh: SshConfig
 packages: Listing<Package>
+resources: Listing<Package | File>
 
 class Package {
     name: String
+    status: "installed" | "missing"
+}
+
+class File {
+    path: String
 }
 
 class SshConfig {
