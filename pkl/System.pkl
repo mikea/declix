@@ -11,7 +11,7 @@ open class Resource {
 }
 
 class Package extends Resource {
-    type: "package"
+    type: "apt"
     name: String
     status: "installed" | "missing"
 }
