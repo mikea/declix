@@ -13,21 +13,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var statusCmd = &cobra.Command{
-	Use:     "status",
-	Args:    cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
-	GroupID: "main",
-	Short:   "Determine status of every resource",
-	Long: `Determine status of every resource. 
-	
-Outputs the table of the current and desired resource status.`,
+// actionsCmd represents the actions command
+var actionsCmd = &cobra.Command{
+	Use:   "actions",
+	Args:  cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
+	Short: "List all actions to perform",
+	Long: `Determine and list all actions to perform to bring the system
+th the desired state.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := pkl.LoadFromPath(context.Background(), args[0])
 		if err != nil {
 			return err
 		}
 
-		pterm.Println()
 		pterm.Println("Target: ", cfg.Target.Address)
 		pterm.Println()
 
@@ -45,26 +43,26 @@ Outputs the table of the current and desired resource status.`,
 		}
 		defer executor.Close()
 
-		states := make([]interfaces.Status, len(resources))
+		actions := make([]interfaces.Action, len(resources))
 		for i, res := range resources {
 			progress.UpdateTitle(res.Id())
 			progress.Increment()
-			states[i] = res.DetermineStatus(executor)
+
+			actions[i] = res.DetermineAction(executor)
 		}
 		progress.Stop()
 
-		tableData := make(pterm.TableData, len(states)+1)
-		tableData[0] = []string{"Resource Id", "Status", "Expected"}
-		for i, state := range states {
-			tableData[i+1] = []string{resources[i].Id(), state.StyledString(resources[i]), resources[i].ExpectedStatusStyledString()}
+		for i, action := range actions {
+			if action != nil {
+				pterm.Println(action.StyledString(resources[i]))
+			}
 		}
-
-		pterm.DefaultTable.WithHasHeader().WithHeaderRowSeparator("-").WithData(tableData).Render()
 
 		return nil
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(statusCmd)
+	rootCmd.AddCommand(actionsCmd)
+
 }

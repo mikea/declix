@@ -8,6 +8,14 @@ import (
 	"mikea/declix/pkl"
 )
 
+func CreateResources(pkl []pkl.Resource) []interfaces.Resource {
+	resources := make([]interfaces.Resource, len(pkl))
+	for i, res := range pkl {
+		resources[i] = CreateResource(res)
+	}
+	return resources
+}
+
 func CreateResource(expected pkl.Resource) interfaces.Resource {
 	switch v := expected.(type) {
 	case pkl.File:

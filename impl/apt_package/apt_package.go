@@ -14,6 +14,26 @@ type resource struct {
 	pkl pkl.Package
 }
 
+// DetermineAction implements interfaces.Resource.
+func (r resource) DetermineAction(executor interfaces.CommandExcutor) interfaces.Action {
+	status := r.DetermineStatus(executor).(status)
+
+	switch r.pkl.GetStatus() {
+	case "installed":
+		if status.state == Installed {
+			return nil
+		}
+		return ToInstall
+	case "missing":
+		if status.state == Missing {
+			return nil
+		}
+		return ToRemove
+	}
+
+	panic(fmt.Sprintf("unexpected status: %#v", r.pkl.GetStatus()))
+}
+
 type state int
 
 const (
@@ -28,7 +48,7 @@ type status struct {
 }
 
 // StyledString implements interfaces.ResouceStatus.
-func (s status) StyledString() string {
+func (s status) StyledString(resource interfaces.Resource) string {
 	switch s.state {
 
 	case Error:
@@ -40,6 +60,24 @@ func (s status) StyledString() string {
 	}
 	panic(fmt.Sprintf("unexpected apt_package.state: %#v", s.state))
 }
+
+type action int
+
+// StyledString implements interfaces.Action.
+func (a action) StyledString(resource interfaces.Resource) string {
+	switch a {
+	case ToInstall:
+		return pterm.FgGreen.Sprint("+", resource.Id())
+	case ToRemove:
+		return pterm.FgRed.Sprint("-", resource.Id())
+	}
+	panic(fmt.Sprintf("unexpected apt_package.action: %#v", a))
+}
+
+const (
+	ToInstall action = iota
+	ToRemove  action = iota
+)
 
 func New(pkl pkl.Package) interfaces.Resource {
 	return resource{pkl: pkl}
@@ -58,7 +96,7 @@ func (r resource) ExpectedStatusStyledString() string {
 }
 
 // DetermineStatus implements impl.Resource.
-func (r resource) DetermineStatus(executor interfaces.CommandExcutor) interfaces.ResouceStatus {
+func (r resource) DetermineStatus(executor interfaces.CommandExcutor) interfaces.Status {
 	output, err := executor.Run(fmt.Sprintf("dpkg-query -W -f='${Version}' %s", r.pkl.GetName()))
 
 	if err != nil {
