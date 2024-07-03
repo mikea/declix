@@ -8,11 +8,9 @@ import (
 )
 
 type System struct {
-	Ssh *SshConfig `pkl:"ssh"`
+	Target *SshConfig `pkl:"target"`
 
-	Packages []*Package `pkl:"packages"`
-
-	Resources []any `pkl:"resources"`
+	Resources []Resource `pkl:"resources"`
 }
 
 // LoadFromPath loads the pkl module at the given path and evaluates it into a System

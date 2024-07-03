@@ -5,15 +5,12 @@ package cmd
 
 import (
 	"context"
-	"fmt"
-	"log"
-	apt_package "mikea/declix/impl"
+	"mikea/declix/impl"
+	"mikea/declix/interfaces"
 	"mikea/declix/pkl"
-	"os"
 
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
-	"golang.org/x/crypto/ssh"
 )
 
 var statusCmd = &cobra.Command{
@@ -31,55 +28,42 @@ Outputs the table of the current and desired resource status.`,
 		}
 
 		pterm.Println()
-		pterm.Println("Target: ", cfg.Ssh.Address)
+		pterm.Println("Target: ", cfg.Target.Address)
 		pterm.Println()
 		pterm.Println(pterm.Gray("Checking resources..."))
-		progress, err := pterm.DefaultProgressbar.WithTotal(len(cfg.Packages)).Start()
+		progress, err := pterm.DefaultProgressbar.WithTotal(len(cfg.Resources)).Start()
 		if err != nil {
 			panic(err)
-		}
-
-		key, err := os.ReadFile(cfg.Ssh.PrivateKey)
-		if err != nil {
-			log.Fatalf("Unable to read private key: %v", err)
-		}
-
-		signer, err := ssh.ParsePrivateKey(key)
-		if err != nil {
-			log.Fatalf("Unable to parse private key: %v", err)
 		}
 
 		progress.UpdateTitle("Dialing in...")
-		sshConfig := &ssh.ClientConfig{
-			User: cfg.Ssh.User,
-			Auth: []ssh.AuthMethod{
-				ssh.PublicKeys(signer),
-			},
-			HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-		}
-		client, err := ssh.Dial("tcp", cfg.Ssh.Address, sshConfig)
+		executor, err := impl.SshExecutor(*cfg.Target)
 		if err != nil {
 			panic(err)
 		}
-		defer client.Close()
+		defer executor.Close()
 
-		states := make([]apt_package.PackageState, len(cfg.Packages))
-		for i, pkg := range cfg.Packages {
-			progress.UpdateTitle(fmt.Sprint("package:", pkg.Name))
+		resources := make([]interfaces.Resource, len(cfg.Resources))
+		for i, res := range cfg.Resources {
+			resources[i] = impl.CreateResource(res)
+		}
+
+		states := make([]interfaces.ResouceStatus, len(resources))
+		for i, res := range resources {
+			progress.UpdateTitle(res.Id())
 			progress.Increment()
-			states[i] = apt_package.Process(client, pkg)
-			states[i].Package = pkg
+			states[i] = res.DetermineStatus(executor)
 		}
 		progress.Stop()
 		pterm.Println()
 
 		tableData := make(pterm.TableData, len(states)+1)
-		tableData[0] = []string{"Resource Id", "Status"}
+		tableData[0] = []string{"Resource Id", "Status", "Expected"}
 		for i, state := range states {
-			tableData[i+1] = []string{state.Package.Name, state.State.StyledString()}
+			tableData[i+1] = []string{resources[i].Id(), state.StyledString(), resources[i].ExpectedStatusStyledString()}
 		}
 
-		pterm.DefaultTable.WithHasHeader().WithData(tableData).Render()
+		pterm.DefaultTable.WithHasHeader().WithHeaderRowSeparator("-").WithData(tableData).Render()
 
 	},
 }

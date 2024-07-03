@@ -3,16 +3,21 @@ module mikea.declix.System
 
 import "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.7.0#/go.pkl" 
 
-ssh: SshConfig
-packages: Listing<Package>
-resources: Listing<Package | File>
+target: SshConfig
+resources: Listing<Resource>
 
-class Package {
+open class Resource {
+    // type: String
+}
+
+class Package extends Resource {
+    type: "package"
     name: String
     status: "installed" | "missing"
 }
 
-class File {
+class File extends Resource  {
+    type: "file"
     path: String
 }
 

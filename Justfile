@@ -4,7 +4,7 @@ GOPATH := `go env GOPATH`
 alias w := watch
 
 watch +WATCH_TARGET='test':
-    watchexec -rc -w . -- just {{WATCH_TARGET}}
+    watchexec -rc -w . -w local/ -- just {{WATCH_TARGET}}
 
 setup: install-pkl install-pkl-gen-go install-cobra-cli
 
