@@ -6,7 +6,6 @@ package cmd
 import (
 	"context"
 	"mikea/declix/impl"
-	"mikea/declix/interfaces"
 	"mikea/declix/pkl"
 
 	"github.com/pterm/pterm"
@@ -27,36 +26,36 @@ Outputs the table of the current and desired resource status.`,
 			return err
 		}
 
-		pterm.Println()
-		pterm.Println("Target: ", cfg.Target.Address)
-		pterm.Println()
+		pterm.Println("Target:", cfg.Target.Address)
 
 		resources := impl.CreateResources(cfg.Resources)
 
+		pterm.FgGray.Println("Checking...")
 		progress, err := pterm.DefaultProgressbar.WithTotal(len(resources)).WithRemoveWhenDone(true).Start()
 		if err != nil {
 			return err
 		}
 
-		progress.UpdateTitle("Dialing in...")
+		progress.UpdateTitle("Connecting...")
 		executor, err := impl.SshExecutor(*cfg.Target)
 		if err != nil {
 			return err
 		}
 		defer executor.Close()
 
-		states := make([]interfaces.Status, len(resources))
-		for i, res := range resources {
-			progress.UpdateTitle(res.Id())
-			progress.Increment()
-			states[i] = res.DetermineStatus(executor)
-		}
+		statuses, errors := impl.DetermineStatuses(resources, executor, *progress)
 		progress.Stop()
 
-		tableData := make(pterm.TableData, len(states)+1)
+		tableData := make(pterm.TableData, len(statuses)+1)
 		tableData[0] = []string{"Resource Id", "Status", "Expected"}
-		for i, state := range states {
-			tableData[i+1] = []string{resources[i].Id(), state.StyledString(resources[i]), resources[i].ExpectedStatusStyledString()}
+		for i, status := range statuses {
+			var statusString string
+			if errors[i] != nil {
+				statusString = pterm.BgRed.Sprint("ERROR")
+			} else {
+				statusString = status.StyledString(resources[i])
+			}
+			tableData[i+1] = []string{resources[i].Id(), statusString, resources[i].ExpectedStatusStyledString()}
 		}
 
 		pterm.DefaultTable.WithHasHeader().WithHeaderRowSeparator("-").WithData(tableData).Render()

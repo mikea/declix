@@ -2,33 +2,46 @@ package apt_package
 
 import (
 	"fmt"
-	"log"
 	"mikea/declix/interfaces"
 	"mikea/declix/pkl"
 
 	"github.com/pterm/pterm"
 	"golang.org/x/crypto/ssh"
+	"gopkg.in/yaml.v3"
 )
 
 type resource struct {
 	pkl pkl.Package
 }
 
+// RunAction implements interfaces.Resource.
+func (r resource) RunAction(executor interfaces.CommandExcutor, a interfaces.Action, status interfaces.Status) error {
+	switch a.(action) {
+	case ToInstall:
+		_, err := executor.Run(fmt.Sprintf("sudo -S apt-get install -y --no-upgrade --no-install-recommends %s", r.pkl.GetName()))
+		return err
+	case ToRemove:
+		_, err := executor.Run(fmt.Sprintf("sudo -S apt-get remove -y %s", r.pkl.GetName()))
+		return err
+	}
+	panic("unexpected apt_package.action")
+}
+
 // DetermineAction implements interfaces.Resource.
-func (r resource) DetermineAction(executor interfaces.CommandExcutor) interfaces.Action {
-	status := r.DetermineStatus(executor).(status)
+func (r resource) DetermineAction(executor interfaces.CommandExcutor, s interfaces.Status) (interfaces.Action, error) {
+	status := s.(status)
 
 	switch r.pkl.GetStatus() {
 	case "installed":
-		if status.state == Installed {
-			return nil
+		if status.PackageState() == Installed {
+			return nil, nil
 		}
-		return ToInstall
+		return ToInstall, nil
 	case "missing":
-		if status.state == Missing {
-			return nil
+		if status.PackageState() == Missing {
+			return nil, nil
 		}
-		return ToRemove
+		return ToRemove, nil
 	}
 
 	panic(fmt.Sprintf("unexpected status: %#v", r.pkl.GetStatus()))
@@ -37,28 +50,31 @@ func (r resource) DetermineAction(executor interfaces.CommandExcutor) interfaces
 type state int
 
 const (
-	Error state = iota
-	Missing
+	Missing state = iota
 	Installed
 )
 
 type status struct {
-	state   state
-	version string
+	Abbrev  string
+	Version string
 }
 
 // StyledString implements interfaces.ResouceStatus.
 func (s status) StyledString(resource interfaces.Resource) string {
-	switch s.state {
-
-	case Error:
-		return pterm.BgRed.Sprint("ERROR")
+	switch s.PackageState() {
 	case Installed:
-		return pterm.FgGreen.Sprint(s.version)
+		return pterm.FgGreen.Sprint(s.Version)
 	case Missing:
 		return pterm.FgRed.Sprint("missing")
 	}
-	panic(fmt.Sprintf("unexpected apt_package.state: %#v", s.state))
+	panic(fmt.Sprintf("unexpected apt_package.state: %#v", s.Abbrev))
+}
+
+func (s status) PackageState() state {
+	if len(s.Abbrev) >= 2 && s.Abbrev[1] == 'i' {
+		return Installed
+	}
+	return Missing
 }
 
 type action int
@@ -96,39 +112,27 @@ func (r resource) ExpectedStatusStyledString() string {
 }
 
 // DetermineStatus implements impl.Resource.
-func (r resource) DetermineStatus(executor interfaces.CommandExcutor) interfaces.Status {
-	output, err := executor.Run(fmt.Sprintf("dpkg-query -W -f='${Version}' %s", r.pkl.GetName()))
+func (r resource) DetermineStatus(executor interfaces.CommandExcutor) (interfaces.Status, error) {
+	out, err := executor.Run(fmt.Sprintf("dpkg-query -W -f='abbrev: ${db:Status-Abbrev}\nversion: ${Version}\n' %s", r.pkl.GetName()))
 
 	if err != nil {
 		e, ok := err.(*ssh.ExitError)
 		if !ok {
-			return status{
-				state: Error,
-			}
+			return nil, err
 		}
 
 		if e.ExitStatus() == 1 {
 			return status{
-				state: Missing,
-			}
+				Abbrev: "uu",
+			}, nil
 		} else {
-			log.Fatalf("Exit error: %v", e)
-			return status{
-				state: Error,
-			}
+			return nil, e
 		}
 	}
 
-	if output == "" {
-		return status{
-			state: Missing,
-		}
-	}
-
-	return status{
-		state:   Installed,
-		version: output,
-	}
+	status := status{}
+	yaml.Unmarshal([]byte(out), &status)
+	return status, nil
 }
 
 // Id implements impl.Resource.

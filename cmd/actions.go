@@ -15,9 +15,10 @@ import (
 
 // actionsCmd represents the actions command
 var actionsCmd = &cobra.Command{
-	Use:   "actions",
-	Args:  cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
-	Short: "List all actions to perform",
+	Use:     "actions",
+	GroupID: "main",
+	Args:    cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
+	Short:   "List all actions to perform",
 	Long: `Determine and list all actions to perform to bring the system
 th the desired state.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -27,7 +28,6 @@ th the desired state.`,
 		}
 
 		pterm.Println("Target: ", cfg.Target.Address)
-		pterm.Println()
 
 		resources := impl.CreateResources(cfg.Resources)
 
@@ -36,24 +36,28 @@ th the desired state.`,
 			return err
 		}
 
-		progress.UpdateTitle("Dialing in...")
+		progress.UpdateTitle("Connecting...")
 		executor, err := impl.SshExecutor(*cfg.Target)
 		if err != nil {
 			return err
 		}
 		defer executor.Close()
 
-		actions := make([]interfaces.Action, len(resources))
-		for i, res := range resources {
-			progress.UpdateTitle(res.Id())
-			progress.Increment()
-
-			actions[i] = res.DetermineAction(executor)
-		}
+		pterm.FgGray.Println("Checking...")
+		statuses, errors := impl.DetermineStatuses(resources, executor, *progress)
 		progress.Stop()
 
+		actions := make([]interfaces.Action, len(resources))
+		for i, res := range resources {
+			if errors[i] == nil {
+				actions[i], errors[i] = res.DetermineAction(executor, statuses[i])
+			}
+		}
+
 		for i, action := range actions {
-			if action != nil {
+			if errors[i] != nil {
+				pterm.BgRed.Sprint(resources[i].Id())
+			} else if action != nil {
 				pterm.Println(action.StyledString(resources[i]))
 			}
 		}

@@ -2,7 +2,6 @@ package file
 
 import (
 	"fmt"
-	"log"
 	"mikea/declix/interfaces"
 	"mikea/declix/pkl"
 
@@ -18,15 +17,20 @@ type resource struct {
 	pkl pkl.File
 }
 
+// RunAction implements interfaces.Resource.
+func (r resource) RunAction(executor interfaces.CommandExcutor, actio interfaces.Action, status interfaces.Status) error {
+	panic("unimplemented")
+}
+
 // DetermineAction implements interfaces.Resource.
-func (r resource) DetermineAction(executor interfaces.CommandExcutor) interfaces.Action {
-	status := r.DetermineStatus(executor).(status)
+func (r resource) DetermineAction(executor interfaces.CommandExcutor, s interfaces.Status) (interfaces.Action, error) {
+	status := s.(status)
 
 	if status.Exists {
-		return nil
+		return nil, nil
 	}
 
-	return ToCreate
+	return ToCreate, nil
 }
 
 type status struct {
@@ -65,15 +69,15 @@ func (r resource) ExpectedStatusStyledString() string {
 }
 
 // DetermineStatus implements interfaces.Resource.
-func (r resource) DetermineStatus(executor interfaces.CommandExcutor) interfaces.Status {
+func (r resource) DetermineStatus(executor interfaces.CommandExcutor) (interfaces.Status, error) {
 	out, err := executor.Run(fmt.Sprintf("if [ ! -f \"%s\" ]; then echo \"exists: false\"; else echo \"exists: true\"; fi", r.pkl.GetPath()))
 	if err != nil {
-		log.Fatalf("Error executing command: %v", err)
+		return nil, err
 	}
 
 	status := status{}
 	yaml.Unmarshal([]byte(out), &status)
-	return status
+	return status, nil
 }
 
 // Id implements interfaces.Resource.

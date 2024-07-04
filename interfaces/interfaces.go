@@ -9,8 +9,9 @@ type Resource interface {
 	Pkl() pkl.Resource
 
 	ExpectedStatusStyledString() string
-	DetermineStatus(executor CommandExcutor) Status
-	DetermineAction(executor CommandExcutor) Action
+	DetermineStatus(executor CommandExcutor) (Status, error)
+	DetermineAction(executor CommandExcutor, status Status) (Action, error)
+	RunAction(executor CommandExcutor, action Action, status Status) error
 }
 
 type Status interface {
