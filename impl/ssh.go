@@ -1,17 +1,31 @@
 package impl
 
 import (
+	"context"
+	"fmt"
 	"log"
 	"mikea/declix/interfaces"
 	"mikea/declix/pkl"
 	"os"
 
+	scp "github.com/bramvdbogaerde/go-scp"
 	"golang.org/x/crypto/ssh"
 )
 
 type sshExecutor struct {
 	pkl    pkl.SshConfig
 	client *ssh.Client
+}
+
+// Upload implements interfaces.CommandExcutor.
+func (s sshExecutor) Upload(file os.File, remotePath string, permissions string) error {
+	client, err := scp.NewClientBySSH(s.client)
+	if err != nil {
+		return fmt.Errorf("can't create scp client: %w", err)
+	}
+	defer client.Close()
+
+	return client.CopyFromFile(context.Background(), file, remotePath, permissions)
 }
 
 func SshExecutor(pkl pkl.SshConfig) (interfaces.CommandExcutor, error) {

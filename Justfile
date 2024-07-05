@@ -11,7 +11,7 @@ setup: install-pkl install-pkl-gen-go install-cobra-cli
 gen: pkl-gen-go
 
 run:
-    export PATH=$(pwd)/bin:$PATH && go run main.go apply local/hamd.pkl
+    export PATH=$(pwd)/bin:$PATH && go run main.go actions local/hamd.pkl
 
 [private]
 install-pkl:

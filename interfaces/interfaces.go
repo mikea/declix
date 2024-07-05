@@ -2,6 +2,7 @@ package interfaces
 
 import (
 	"mikea/declix/pkl"
+	"os"
 )
 
 type Resource interface {
@@ -20,6 +21,7 @@ type Status interface {
 
 type CommandExcutor interface {
 	Run(command string) (string, error)
+	Upload(file os.File, remotePath string, permissions string) error
 	Close() error
 }
 

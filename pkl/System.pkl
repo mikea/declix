@@ -19,6 +19,10 @@ class Package extends Resource {
 class File extends Resource  {
     type: "file"
     path: String
+    contentFile: String
+    owner: String
+    group: String
+    permissions: String
 }
 
 class SshConfig {

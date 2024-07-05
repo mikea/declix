@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"mikea/declix/interfaces"
 	"mikea/declix/pkl"
+	"os"
+	"strings"
 
 	"github.com/pterm/pterm"
 	"gopkg.in/yaml.v3"
@@ -19,7 +21,30 @@ type resource struct {
 
 // RunAction implements interfaces.Resource.
 func (r resource) RunAction(executor interfaces.CommandExcutor, actio interfaces.Action, status interfaces.Status) error {
-	panic("unimplemented")
+	tmp, err := executor.Run("mktemp")
+	if err != nil {
+		return err
+	}
+	tmp = strings.TrimSuffix(tmp, "\n")
+	defer executor.Run(fmt.Sprintf("rm -f %s", tmp))
+
+	content, err := os.Open(r.pkl.GetContentFile())
+	if err != nil {
+		return err
+	}
+	defer content.Close()
+
+	err = executor.Upload(*content, tmp, "0655")
+	if err != nil {
+		return fmt.Errorf("error uploading file: %w", err)
+	}
+
+	_, err = executor.Run(fmt.Sprintf("sudo -S cp %s %s", tmp, r.pkl.GetPath()))
+	if err != nil {
+		return fmt.Errorf("error copyinh file: %w", err)
+	}
+
+	return nil
 }
 
 // DetermineAction implements interfaces.Resource.
