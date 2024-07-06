@@ -100,12 +100,12 @@ func New(pkl pkl.Package) interfaces.Resource {
 }
 
 // ExpectedStatusStyledString implements interfaces.Resource.
-func (r resource) ExpectedStatusStyledString() string {
+func (r resource) ExpectedStatusStyledString() (string, error) {
 	switch r.pkl.GetStatus() {
 	case "installed":
-		return pterm.FgGreen.Sprint("installed")
+		return pterm.FgGreen.Sprint("installed"), nil
 	case "missing":
-		return pterm.FgRed.Sprint("missing")
+		return pterm.FgRed.Sprint("missing"), nil
 	}
 
 	panic(fmt.Sprintf("unexpected status: %#v", r.pkl.GetStatus()))

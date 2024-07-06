@@ -3,6 +3,7 @@ package impl
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"mikea/declix/interfaces"
 	"mikea/declix/pkl"
@@ -18,14 +19,14 @@ type sshExecutor struct {
 }
 
 // Upload implements interfaces.CommandExcutor.
-func (s sshExecutor) Upload(file os.File, remotePath string, permissions string) error {
+func (s sshExecutor) Upload(content io.Reader, remotePath string, permissions string, size int64) error {
 	client, err := scp.NewClientBySSH(s.client)
 	if err != nil {
 		return fmt.Errorf("can't create scp client: %w", err)
 	}
 	defer client.Close()
 
-	return client.CopyFromFile(context.Background(), file, remotePath, permissions)
+	return client.Copy(context.Background(), content, remotePath, permissions, size)
 }
 
 func SshExecutor(pkl pkl.SshConfig) (interfaces.CommandExcutor, error) {
@@ -58,16 +59,15 @@ func SshExecutor(pkl pkl.SshConfig) (interfaces.CommandExcutor, error) {
 func (s sshExecutor) Run(command string) (string, error) {
 	session, err := s.client.NewSession()
 	if err != nil {
-		log.Fatalf("Failed to create session: %s", err)
+		return "", fmt.Errorf("error creating new session: %w", err)
 	}
 	defer session.Close()
 
 	output, err := session.CombinedOutput(command)
 	if err != nil {
-		return "", err
+		return string(output), fmt.Errorf("%w %s", err, output)
 	}
-
-	return string(output), nil
+	return string(output), err
 }
 
 func (s sshExecutor) Close() error {

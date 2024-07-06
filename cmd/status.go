@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"mikea/declix/impl"
 	"mikea/declix/pkl"
 
@@ -55,10 +56,33 @@ Outputs the table of the current and desired resource status.`,
 			} else {
 				statusString = status.StyledString(resources[i])
 			}
-			tableData[i+1] = []string{resources[i].Id(), statusString, resources[i].ExpectedStatusStyledString()}
+			expected, err := resources[i].ExpectedStatusStyledString()
+			if err != nil {
+				return err
+			}
+			tableData[i+1] = []string{resources[i].Id(), statusString, expected}
 		}
 
 		pterm.DefaultTable.WithHasHeader().WithHeaderRowSeparator("-").WithData(tableData).Render()
+
+		hasErrors := false
+		for _, err := range errors {
+			if err != nil {
+				hasErrors = true
+				break
+			}
+		}
+
+		if hasErrors {
+			pterm.Println(pterm.FgRed.Sprint("Errors:"))
+			for i, err := range errors {
+				if err != nil {
+					pterm.Println(pterm.BgRed.Sprint(resources[i].Id()), pterm.FgRed.Sprint(err))
+				}
+			}
+
+			return fmt.Errorf("errors occured")
+		}
 
 		return nil
 	},

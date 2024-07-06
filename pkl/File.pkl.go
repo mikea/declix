@@ -8,7 +8,7 @@ type File interface {
 
 	GetPath() string
 
-	GetContentFile() string
+	GetContent() any
 
 	GetOwner() string
 
@@ -26,7 +26,7 @@ type FileImpl struct {
 
 	Path string `pkl:"path"`
 
-	ContentFile string `pkl:"contentFile"`
+	Content any `pkl:"content"`
 
 	Owner string `pkl:"owner"`
 
@@ -43,8 +43,8 @@ func (rcv *FileImpl) GetPath() string {
 	return rcv.Path
 }
 
-func (rcv *FileImpl) GetContentFile() string {
-	return rcv.ContentFile
+func (rcv *FileImpl) GetContent() any {
+	return rcv.Content
 }
 
 func (rcv *FileImpl) GetOwner() string {

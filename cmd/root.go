@@ -7,8 +7,9 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "declix",
-	Short: "Declarative Linux",
+	Use:          "declix",
+	Short:        "Declarative Linux",
+	SilenceUsage: true,
 	Long: `Declarative Linux.
 
 Declix is a CLI tool to manage Linux systems in a declartive way.`,

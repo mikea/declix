@@ -1,15 +1,15 @@
 package interfaces
 
 import (
+	"io"
 	"mikea/declix/pkl"
-	"os"
 )
 
 type Resource interface {
 	Id() string
 	Pkl() pkl.Resource
 
-	ExpectedStatusStyledString() string
+	ExpectedStatusStyledString() (string, error)
 	DetermineStatus(executor CommandExcutor) (Status, error)
 	DetermineAction(executor CommandExcutor, status Status) (Action, error)
 	RunAction(executor CommandExcutor, action Action, status Status) error
@@ -21,7 +21,7 @@ type Status interface {
 
 type CommandExcutor interface {
 	Run(command string) (string, error)
-	Upload(file os.File, remotePath string, permissions string) error
+	Upload(content io.Reader, remotePath string, permissions string, size int64) error
 	Close() error
 }
 

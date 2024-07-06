@@ -1,3 +1,4 @@
+# see https://nixos.wiki/wiki/Go
 { pkgs ? import <nixpkgs> {} }:
   pkgs.mkShell {
     hardeningDisable = [ "fortify" ];

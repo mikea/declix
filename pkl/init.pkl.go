@@ -9,4 +9,5 @@ func init() {
 	pkl.RegisterMapping("mikea.declix.System#Resource", ResourceImpl{})
 	pkl.RegisterMapping("mikea.declix.System#Package", PackageImpl{})
 	pkl.RegisterMapping("mikea.declix.System#File", FileImpl{})
+	pkl.RegisterMapping("mikea.declix.System#FileContent", FileContent{})
 }

@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"mikea/declix/impl"
 	"mikea/declix/interfaces"
 	"mikea/declix/pkl"
@@ -56,9 +57,15 @@ th the desired state.`,
 
 		for i, action := range actions {
 			if errors[i] != nil {
-				pterm.BgRed.Sprint(resources[i].Id())
+				pterm.Println(pterm.BgRed.Sprint(resources[i].Id()), errors[i])
 			} else if action != nil {
 				pterm.Println(action.StyledString(resources[i]))
+			}
+		}
+
+		for _, err := range errors {
+			if err != nil {
+				return fmt.Errorf("there were errors applying actions")
 			}
 		}
 
