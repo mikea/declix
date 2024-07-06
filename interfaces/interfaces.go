@@ -2,12 +2,12 @@ package interfaces
 
 import (
 	"io"
-	"mikea/declix/pkl"
+	"mikea/declix/resources"
 )
 
 type Resource interface {
 	Id() string
-	Pkl() pkl.Resource
+	Pkl() resources.Resource
 
 	ExpectedStatusStyledString() (string, error)
 	DetermineStatus(executor CommandExcutor) (Status, error)

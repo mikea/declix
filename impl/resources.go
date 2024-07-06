@@ -2,15 +2,15 @@ package impl
 
 import (
 	"fmt"
-	"mikea/declix/impl/apt_package"
-	"mikea/declix/impl/file"
 	"mikea/declix/interfaces"
-	"mikea/declix/pkl"
+	"mikea/declix/resources"
+	"mikea/declix/resources/apt"
+	"mikea/declix/resources/filesystem"
 
 	"github.com/pterm/pterm"
 )
 
-func CreateResources(pkl []pkl.Resource) []interfaces.Resource {
+func CreateResources(pkl []resources.Resource) []interfaces.Resource {
 	resources := make([]interfaces.Resource, len(pkl))
 	for i, res := range pkl {
 		resources[i] = CreateResource(res)
@@ -18,12 +18,12 @@ func CreateResources(pkl []pkl.Resource) []interfaces.Resource {
 	return resources
 }
 
-func CreateResource(expected pkl.Resource) interfaces.Resource {
+func CreateResource(expected resources.Resource) interfaces.Resource {
 	switch v := expected.(type) {
-	case pkl.File:
-		return file.New(v)
-	case pkl.Package:
-		return apt_package.New(v)
+	case filesystem.File:
+		return filesystem.New(v)
+	case apt.Package:
+		return apt.New(v)
 	default:
 		panic(fmt.Sprintf("unexpected pkl.Resource: %#v", v))
 	}

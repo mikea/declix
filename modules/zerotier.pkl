@@ -1,12 +1,13 @@
-import "../pkl/System.pkl"
+import "../resources/filesystem/FileSystem.pkl" as fs
+import "../resources/Resources.pkl"
 
 url = "https://download.zerotier.com/"
 codename = "bookworm"
 
-function installed(): Listing<System.Resource> = new Listing {
-    new System.File {
+function installed(): Listing<Resources.Resource> = new Listing {
+    new fs.File {
         path = "/etc/apt/trusted.gpg.d/zerotier.com.gpg"
-        content = new System.FileContent {
+        content = new fs.FileContent {
             file = "local/zerotier.com.gpg"
         }
         owner = "root"
@@ -14,7 +15,7 @@ function installed(): Listing<System.Resource> = new Listing {
         permissions = "644"
     }
 
-    new System.File {
+    new fs.File {
         path = "/etc/apt/sources.list.d/zerotier.list"
         owner = "root"
         group = "root"
@@ -23,7 +24,7 @@ function installed(): Listing<System.Resource> = new Listing {
     }
 }
 
-function enabled(): Listing<System.Resource> = new Listing {
+function enabled(): Listing<Resources.Resource> = new Listing {
     ...installed()
     // new Package {
     //     name = "zerotierone"

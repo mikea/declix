@@ -11,7 +11,8 @@ setup: install-pkl install-pkl-gen-go install-cobra-cli
 gen: pkl-gen-go
 
 run:
-    export PATH=$(pwd)/bin:$PATH && go run main.go status local/hamd.pkl
+    export PATH=$(pwd)/bin:$PATH && go run main.go status -t local/hamd-target.pkl -r local/hamd.pkl
+    export PATH=$(pwd)/bin:$PATH && go run main.go actions -t local/hamd-target.pkl -r local/hamd.pkl
 
 [private]
 install-pkl:
@@ -25,7 +26,11 @@ install-pkl-gen-go:
 
 [private]
 pkl-gen-go:
-    export PATH=$(pwd)/bin:$PATH && {{GOPATH}}/bin/pkl-gen-go pkl/System.pkl --base-path github.com/mikea/declix
+    find . -name "*.pkl.go" -exec rm -f {} +
+    export PATH=$(pwd)/bin:$PATH && {{GOPATH}}/bin/pkl-gen-go resources/apt/Apt.pkl --base-path mikea/declix
+    export PATH=$(pwd)/bin:$PATH && {{GOPATH}}/bin/pkl-gen-go resources/filesystem/FileSystem.pkl --base-path mikea/declix
+    export PATH=$(pwd)/bin:$PATH && {{GOPATH}}/bin/pkl-gen-go resources/Resources.pkl --base-path mikea/declix
+    export PATH=$(pwd)/bin:$PATH && {{GOPATH}}/bin/pkl-gen-go target/Target.pkl --base-path mikea/declix
 
 [private]
 install-cobra-cli:

@@ -1,0 +1,8 @@
+@go.Package { name = "mikea/declix/resources" }
+module mikea.declix.Resources
+
+import "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.7.0#/go.pkl" 
+
+resources: Listing<Resource>
+
+open class Resource { }

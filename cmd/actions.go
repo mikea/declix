@@ -8,7 +8,8 @@ import (
 	"fmt"
 	"mikea/declix/impl"
 	"mikea/declix/interfaces"
-	"mikea/declix/pkl"
+	"mikea/declix/resources"
+	"mikea/declix/target"
 
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -18,19 +19,24 @@ import (
 var actionsCmd = &cobra.Command{
 	Use:     "actions",
 	GroupID: "main",
-	Args:    cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
+	Args:    cobra.ExactArgs(0),
 	Short:   "List all actions to perform",
 	Long: `Determine and list all actions to perform to bring the system
 th the desired state.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cfg, err := pkl.LoadFromPath(context.Background(), args[0])
+		targetPkl, err := target.LoadFromPath(context.Background(), targetFile)
+		if err != nil {
+			return err
+		}
+		target := targetPkl.Target
+		pterm.Println("Target: ", target.Address)
+
+		resourcesPkl, err := resources.LoadFromPath(context.Background(), resourcesFile)
 		if err != nil {
 			return err
 		}
 
-		pterm.Println("Target: ", cfg.Target.Address)
-
-		resources := impl.CreateResources(cfg.Resources)
+		resources := impl.CreateResources(resourcesPkl.Resources)
 
 		progress, err := pterm.DefaultProgressbar.WithTotal(len(resources)).WithRemoveWhenDone(true).Start()
 		if err != nil {
@@ -38,7 +44,7 @@ th the desired state.`,
 		}
 
 		progress.UpdateTitle("Connecting...")
-		executor, err := impl.SshExecutor(*cfg.Target)
+		executor, err := impl.SshExecutor(*target)
 		if err != nil {
 			return err
 		}

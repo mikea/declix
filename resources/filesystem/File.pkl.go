@@ -1,8 +1,10 @@
-// Code generated from Pkl module `mikea.declix.System`. DO NOT EDIT.
-package pkl
+// Code generated from Pkl module `mikea.declix.resources.FileSystem`. DO NOT EDIT.
+package filesystem
+
+import "mikea/declix/resources"
 
 type File interface {
-	Resource
+	resources.Resource
 
 	GetType() string
 
@@ -20,7 +22,7 @@ type File interface {
 var _ File = (*FileImpl)(nil)
 
 type FileImpl struct {
-	*ResourceImpl
+	*resources.ResourceImpl
 
 	Type string `pkl:"type"`
 

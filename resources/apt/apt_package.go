@@ -1,9 +1,9 @@
-package apt_package
+package apt
 
 import (
 	"fmt"
 	"mikea/declix/interfaces"
-	"mikea/declix/pkl"
+	"mikea/declix/resources"
 
 	"github.com/pterm/pterm"
 	"golang.org/x/crypto/ssh"
@@ -11,7 +11,7 @@ import (
 )
 
 type resource struct {
-	pkl pkl.Package
+	pkl Package
 }
 
 // RunAction implements interfaces.Resource.
@@ -95,7 +95,7 @@ const (
 	ToRemove  action = iota
 )
 
-func New(pkl pkl.Package) interfaces.Resource {
+func New(pkl Package) interfaces.Resource {
 	return resource{pkl: pkl}
 }
 
@@ -141,6 +141,6 @@ func (r resource) Id() string {
 }
 
 // Pkl implements impl.Resource.
-func (r resource) Pkl() pkl.Resource {
+func (r resource) Pkl() resources.Resource {
 	return r.pkl
 }

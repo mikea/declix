@@ -7,7 +7,8 @@ import (
 	"context"
 	"mikea/declix/impl"
 	"mikea/declix/interfaces"
-	"mikea/declix/pkl"
+	"mikea/declix/resources"
+	"mikea/declix/target"
 
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -20,14 +21,19 @@ var applyCmd = &cobra.Command{
 	Short:   "Apply all actions",
 	Long:    `Apply all necessary actions to bring system to desired state.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cfg, err := pkl.LoadFromPath(context.Background(), args[0])
+		targetPkl, err := target.LoadFromPath(context.Background(), targetFile)
+		if err != nil {
+			return err
+		}
+		target := targetPkl.Target
+		pterm.Println("Target: ", target.Address)
+
+		resourcesPkl, err := resources.LoadFromPath(context.Background(), resourcesFile)
 		if err != nil {
 			return err
 		}
 
-		pterm.Println("Target:", cfg.Target.Address)
-
-		resources := impl.CreateResources(cfg.Resources)
+		resources := impl.CreateResources(resourcesPkl.Resources)
 
 		pterm.FgGray.Println("Checking...")
 		progress, err := pterm.DefaultProgressbar.WithTotal(len(resources)).WithRemoveWhenDone(true).Start()
@@ -36,7 +42,7 @@ var applyCmd = &cobra.Command{
 		}
 
 		progress.UpdateTitle("Connecting...")
-		executor, err := impl.SshExecutor(*cfg.Target)
+		executor, err := impl.SshExecutor(*target)
 		if err != nil {
 			return err
 		}

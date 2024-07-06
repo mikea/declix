@@ -1,11 +1,11 @@
-package file
+package filesystem
 
 import (
 	"crypto/sha256"
 	"fmt"
 	"io"
 	"mikea/declix/interfaces"
-	"mikea/declix/pkl"
+	"mikea/declix/resources"
 	"os"
 	"strings"
 
@@ -13,12 +13,12 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func New(pkl pkl.File) interfaces.Resource {
+func New(pkl File) interfaces.Resource {
 	return resource{pkl: pkl}
 }
 
 type resource struct {
-	pkl pkl.File
+	pkl File
 }
 
 // RunAction implements interfaces.Resource.
@@ -81,7 +81,7 @@ func (r noCloseReadCloser) Read(p []byte) (n int, err error) {
 
 func (r resource) GetContent() (io.ReadCloser, int64, error) {
 	switch c := r.pkl.GetContent().(type) {
-	case *pkl.FileContent:
+	case *FileContent:
 		f, err := os.Open(c.File)
 		if err != nil {
 			return nil, 0, err
@@ -183,6 +183,6 @@ func (r resource) Id() string {
 }
 
 // Pkl implements interfaces.Resource.
-func (r resource) Pkl() pkl.Resource {
+func (r resource) Pkl() resources.Resource {
 	return r.pkl
 }

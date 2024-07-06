@@ -1,0 +1,19 @@
+@go.Package { name = "mikea/declix/resources/filesystem" }
+module mikea.declix.resources.FileSystem
+
+import "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.7.0#/go.pkl" 
+import "../Resources.pkl"
+
+
+class File extends Resources.Resource  {
+    type: "file"
+    path: String
+    content: String | FileContent
+    owner: String
+    group: String
+    permissions: String
+}
+
+class FileContent {
+    file: String
+}

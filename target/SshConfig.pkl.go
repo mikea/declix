@@ -1,5 +1,5 @@
-// Code generated from Pkl module `mikea.declix.System`. DO NOT EDIT.
-package pkl
+// Code generated from Pkl module `mikea.declix.Target`. DO NOT EDIT.
+package target
 
 type SshConfig struct {
 	Address string `pkl:"address"`

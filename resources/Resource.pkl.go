@@ -1,5 +1,5 @@
-// Code generated from Pkl module `mikea.declix.System`. DO NOT EDIT.
-package pkl
+// Code generated from Pkl module `mikea.declix.Resources`. DO NOT EDIT.
+package resources
 
 type Resource interface {
 }

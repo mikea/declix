@@ -6,7 +6,7 @@ import (
 	"io"
 	"log"
 	"mikea/declix/interfaces"
-	"mikea/declix/pkl"
+	"mikea/declix/target"
 	"os"
 
 	scp "github.com/bramvdbogaerde/go-scp"
@@ -14,7 +14,7 @@ import (
 )
 
 type sshExecutor struct {
-	pkl    pkl.SshConfig
+	pkl    target.SshConfig
 	client *ssh.Client
 }
 
@@ -29,7 +29,7 @@ func (s sshExecutor) Upload(content io.Reader, remotePath string, permissions st
 	return client.Copy(context.Background(), content, remotePath, permissions, size)
 }
 
-func SshExecutor(pkl pkl.SshConfig) (interfaces.CommandExcutor, error) {
+func SshExecutor(pkl target.SshConfig) (interfaces.CommandExcutor, error) {
 	key, err := os.ReadFile(pkl.PrivateKey)
 	if err != nil {
 		log.Fatalf("Unable to read private key: %v", err)

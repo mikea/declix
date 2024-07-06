@@ -1,8 +1,10 @@
-// Code generated from Pkl module `mikea.declix.System`. DO NOT EDIT.
-package pkl
+// Code generated from Pkl module `mikea.declix.resources.Apt`. DO NOT EDIT.
+package apt
+
+import "mikea/declix/resources"
 
 type Package interface {
-	Resource
+	resources.Resource
 
 	GetType() string
 
@@ -14,7 +16,7 @@ type Package interface {
 var _ Package = (*PackageImpl)(nil)
 
 type PackageImpl struct {
-	*ResourceImpl
+	*resources.ResourceImpl
 
 	Type string `pkl:"type"`
 

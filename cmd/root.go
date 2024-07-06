@@ -6,6 +6,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var targetFile string
+var resourcesFile string
+
 var rootCmd = &cobra.Command{
 	Use:          "declix",
 	Short:        "Declarative Linux",
@@ -24,4 +27,7 @@ func Execute() {
 
 func init() {
 	rootCmd.AddGroup(&cobra.Group{ID: "main", Title: "Main Commands:"})
+
+	rootCmd.PersistentFlags().StringVarP(&targetFile, "target", "t", "", "target .pkl description file")
+	rootCmd.PersistentFlags().StringVarP(&resourcesFile, "resources", "r", "", "resources .pkl description file")
 }
