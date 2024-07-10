@@ -1,4 +1,4 @@
-// Code generated from Pkl module `mikea.declix.resources.Apt`. DO NOT EDIT.
+// Code generated from Pkl module `mikea.declix.resources.apt`. DO NOT EDIT.
 package apt
 
 import "mikea/declix/resources"
@@ -11,6 +11,8 @@ type Package interface {
 	GetName() string
 
 	GetStatus() string
+
+	GetUpdateBeforeInstall() bool
 }
 
 var _ Package = (*PackageImpl)(nil)
@@ -23,6 +25,8 @@ type PackageImpl struct {
 	Name string `pkl:"name"`
 
 	Status string `pkl:"status"`
+
+	UpdateBeforeInstall bool `pkl:"updateBeforeInstall"`
 }
 
 func (rcv *PackageImpl) GetType() string {
@@ -35,4 +39,8 @@ func (rcv *PackageImpl) GetName() string {
 
 func (rcv *PackageImpl) GetStatus() string {
 	return rcv.Status
+}
+
+func (rcv *PackageImpl) GetUpdateBeforeInstall() bool {
+	return rcv.UpdateBeforeInstall
 }

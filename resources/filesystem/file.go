@@ -22,13 +22,75 @@ type resource struct {
 }
 
 // RunAction implements interfaces.Resource.
-func (r resource) RunAction(executor interfaces.CommandExcutor, action interfaces.Action, status interfaces.Status) error {
+func (r resource) RunAction(executor interfaces.CommandExcutor, a interfaces.Action, s interfaces.Status) error {
+	expectedStatus, err := r.ExpectedStatus()
+	if err != nil {
+		return err
+	}
+
+	action := a.(action)
+	switch action {
+	case ToUpload:
+		return r.upload(executor, *expectedStatus)
+	case ToDelete:
+		panic("not implemented")
+	case ToUpdate:
+		return r.update(executor, s.(status), *expectedStatus)
+	default:
+		panic(fmt.Sprintf("unexpected filesystem.action: %#v", action))
+	}
+}
+
+func (r resource) update(executor interfaces.CommandExcutor, status status, expectedStatus status) error {
+	if status.Group != expectedStatus.Group {
+		if err := r.chgrp(executor, expectedStatus); err != nil {
+			return err
+		}
+	}
+	if status.Owner != expectedStatus.Owner {
+		if err := r.chown(executor, expectedStatus); err != nil {
+			return err
+		}
+	}
+	if status.Permissions != expectedStatus.Permissions {
+		if err := r.chmod(executor, expectedStatus); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (r resource) chmod(executor interfaces.CommandExcutor, expectedStatus status) error {
+	_, err := executor.Run(fmt.Sprintf("sudo -S chmod %s %s", expectedStatus.Permissions, r.pkl.GetPath()))
+	if err != nil {
+		return fmt.Errorf("error changing permissions: %w", err)
+	}
+	return nil
+}
+
+func (r resource) chown(executor interfaces.CommandExcutor, expectedStatus status) error {
+	_, err := executor.Run(fmt.Sprintf("sudo -S chown %s %s", expectedStatus.Owner, r.pkl.GetPath()))
+	if err != nil {
+		return fmt.Errorf("error changing permissions: %w", err)
+	}
+	return nil
+}
+
+func (r resource) chgrp(executor interfaces.CommandExcutor, expectedStatus status) error {
+	_, err := executor.Run(fmt.Sprintf("sudo -S chgrp %s %s", expectedStatus.Group, r.pkl.GetPath()))
+	if err != nil {
+		return fmt.Errorf("error changing permissions: %w", err)
+	}
+	return nil
+}
+
+func (r resource) upload(executor interfaces.CommandExcutor, expectedStatus status) error {
 	tmp, err := executor.Run("mktemp")
 	if err != nil {
 		return err
 	}
 	tmp = strings.TrimSuffix(tmp, "\n")
-	defer executor.Run(fmt.Sprintf("rm -f %s", tmp))
 
 	content, size, err := r.GetContent()
 	if err != nil {
@@ -36,14 +98,24 @@ func (r resource) RunAction(executor interfaces.CommandExcutor, action interface
 	}
 	defer content.Close()
 
-	err = executor.Upload(content, tmp, r.pkl.GetPermissions(), size)
+	err = executor.Upload(content, tmp, "0644", size)
 	if err != nil {
 		return fmt.Errorf("error uploading file: %w", err)
 	}
 
-	_, err = executor.Run(fmt.Sprintf("sudo -S cp %s %s", tmp, r.pkl.GetPath()))
+	_, err = executor.Run(fmt.Sprintf("sudo -S mv %s %s", tmp, r.pkl.GetPath()))
 	if err != nil {
-		return fmt.Errorf("error copyinh file: %w", err)
+		return fmt.Errorf("error copying file: %w", err)
+	}
+
+	if err := r.chown(executor, expectedStatus); err != nil {
+		return err
+	}
+	if err := r.chgrp(executor, expectedStatus); err != nil {
+		return err
+	}
+	if err := r.chmod(executor, expectedStatus); err != nil {
+		return err
 	}
 
 	return nil
@@ -52,17 +124,29 @@ func (r resource) RunAction(executor interfaces.CommandExcutor, action interface
 // DetermineAction implements interfaces.Resource.
 func (r resource) DetermineAction(executor interfaces.CommandExcutor, s interfaces.Status) (interfaces.Action, error) {
 	status := s.(status)
-
-	if status.Exists {
-		if status.Owner != r.pkl.GetOwner() ||
-			status.Group != r.pkl.GetGroup() ||
-			status.Permissions != r.pkl.GetPermissions() {
-			return ToUpdate, nil
-		}
-		return nil, nil
+	expectedStatus, err := r.ExpectedStatus()
+	if err != nil {
+		return nil, err
 	}
 
-	return ToCreate, nil
+	if expectedStatus.Exists {
+		if status.Exists {
+			if status.Sha256 != expectedStatus.Sha256 {
+				return ToUpload, nil
+			}
+			if status.Owner != expectedStatus.Owner ||
+				status.Group != expectedStatus.Group ||
+				status.Permissions != expectedStatus.Permissions {
+				return ToUpdate, nil
+			}
+
+			return nil, nil
+		}
+
+		return ToUpload, nil
+	} else {
+		panic("not implemented")
+	}
 }
 
 type noCloseReadCloser struct {
@@ -121,7 +205,7 @@ type action int
 // StyledString implements interfaces.Action.
 func (a action) StyledString(resource interfaces.Resource) string {
 	switch a {
-	case ToCreate:
+	case ToUpload:
 		return pterm.FgGreen.Sprint("+", resource.Id())
 	case ToUpdate:
 		return pterm.FgYellow.Sprint("~", resource.Id())
@@ -132,26 +216,27 @@ func (a action) StyledString(resource interfaces.Resource) string {
 }
 
 const (
-	ToCreate action = iota
+	ToUpload action = iota
 	ToUpdate
 	ToDelete
 )
 
 // ExpectedStatusStyledString implements interfaces.Resource.
 func (r resource) ExpectedStatusStyledString() (string, error) {
-	content, _, err := r.GetContent()
+	expectedStatus, err := r.ExpectedStatus()
 	if err != nil {
 		return "", err
 	}
-	defer content.Close()
 
-	hasher := sha256.New()
-	if _, err := io.Copy(hasher, content); err != nil {
-		return "", err
-	}
-	hash := fmt.Sprintf("%x", string(hasher.Sum(nil)))
-
-	return pterm.FgGreen.Sprint(hash[:8], " ", r.pkl.GetOwner(), ":", r.pkl.GetGroup(), " ", r.pkl.GetPermissions()), nil
+	return pterm.FgGreen.Sprint(
+		expectedStatus.Sha256[:8],
+		" ",
+		expectedStatus.Owner,
+		":",
+		expectedStatus.Group,
+		" ",
+		expectedStatus.Permissions,
+	), nil
 }
 
 // DetermineStatus implements interfaces.Resource.
@@ -185,4 +270,27 @@ func (r resource) Id() string {
 // Pkl implements interfaces.Resource.
 func (r resource) Pkl() resources.Resource {
 	return r.pkl
+}
+
+func (r resource) ExpectedStatus() (*status, error) {
+	content, size, err := r.GetContent()
+	if err != nil {
+		return nil, err
+	}
+	defer content.Close()
+
+	hasher := sha256.New()
+	if _, err := io.Copy(hasher, content); err != nil {
+		return nil, err
+	}
+	sha256 := fmt.Sprintf("%x", string(hasher.Sum(nil)))
+
+	return &status{
+		Exists:      true,
+		Size:        size,
+		Sha256:      sha256,
+		Owner:       r.pkl.GetOwner(),
+		Group:       r.pkl.GetGroup(),
+		Permissions: r.pkl.GetPermissions(),
+	}, nil
 }

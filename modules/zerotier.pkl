@@ -1,4 +1,5 @@
 import "../resources/filesystem/FileSystem.pkl" as fs
+import "../resources/apt/Apt.pkl"
 import "../resources/Resources.pkl"
 
 url = "https://download.zerotier.com/"
@@ -22,12 +23,14 @@ function installed(): Listing<Resources.Resource> = new Listing {
         permissions = "644"
         content = "deb [signed-by=/etc/apt/trusted.gpg.d/zerotier.com.gpg] \(url)debian/\(codename) \(codename) main"
     }
+
+    new Apt.Package {
+        name = "zerotier-one"
+        status = "installed"
+        updateBeforeInstall = true
+    }
 }
 
 function enabled(): Listing<Resources.Resource> = new Listing {
     ...installed()
-    // new Package {
-    //     name = "zerotierone"
-    //     status = "installed"
-    // }
 }

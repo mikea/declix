@@ -1,4 +1,4 @@
-// Code generated from Pkl module `mikea.declix.resources.Apt`. DO NOT EDIT.
+// Code generated from Pkl module `mikea.declix.resources.apt`. DO NOT EDIT.
 package apt
 
 import (

@@ -18,7 +18,11 @@ type resource struct {
 func (r resource) RunAction(executor interfaces.CommandExcutor, a interfaces.Action, status interfaces.Status) error {
 	switch a.(action) {
 	case ToInstall:
-		_, err := executor.Run(fmt.Sprintf("sudo -S apt-get install -y --no-upgrade --no-install-recommends %s", r.pkl.GetName()))
+		cmd := fmt.Sprintf("sudo -S apt-get install -y --no-upgrade --no-install-recommends %s", r.pkl.GetName())
+		if r.pkl.GetUpdateBeforeInstall() {
+			cmd = fmt.Sprintf("sudo -S apt-get update && %s", cmd)
+		}
+		_, err := executor.Run(cmd)
 		return err
 	case ToRemove:
 		_, err := executor.Run(fmt.Sprintf("sudo -S apt-get remove -y %s", r.pkl.GetName()))
@@ -113,7 +117,9 @@ func (r resource) ExpectedStatusStyledString() (string, error) {
 
 // DetermineStatus implements impl.Resource.
 func (r resource) DetermineStatus(executor interfaces.CommandExcutor) (interfaces.Status, error) {
-	out, err := executor.Run(fmt.Sprintf("dpkg-query -W -f='abbrev: ${db:Status-Abbrev}\nversion: ${Version}\n' %s", r.pkl.GetName()))
+	out, err := executor.Run(fmt.Sprintf(
+		"dpkg-query -W -f='abbrev: ${db:Status-Abbrev}\nversion: ${Version}\n' %s || { [[ $? -eq 1 ]] && echo 'abbrev: uu'; }",
+		r.pkl.GetName()))
 
 	if err != nil {
 		e, ok := err.(*ssh.ExitError)

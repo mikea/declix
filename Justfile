@@ -1,3 +1,6 @@
+TARGET := "local/hamd-target.pkl"
+RESOURCES := "local/hamd.pkl"
+
 GOROOT := `go env GOROOT`
 GOPATH := `go env GOPATH`
 
@@ -10,9 +13,16 @@ setup: install-pkl install-pkl-gen-go install-cobra-cli
 
 gen: pkl-gen-go
 
-run:
-    export PATH=$(pwd)/bin:$PATH && go run main.go status -t local/hamd-target.pkl -r local/hamd.pkl
-    export PATH=$(pwd)/bin:$PATH && go run main.go actions -t local/hamd-target.pkl -r local/hamd.pkl
+run: status actions apply
+
+status:
+    export PATH=$(pwd)/bin:$PATH && go run main.go status -t {{TARGET}} -r {{RESOURCES}}
+
+actions:
+    export PATH=$(pwd)/bin:$PATH && go run main.go actions -t {{TARGET}} -r {{RESOURCES}}
+
+apply:
+    export PATH=$(pwd)/bin:$PATH && go run main.go apply -t {{TARGET}} -r {{RESOURCES}}
 
 [private]
 install-pkl:

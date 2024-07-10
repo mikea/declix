@@ -12,6 +12,9 @@
             "program": "${workspaceFolder}/main.go",
             "args": [
                 "apply",
+                "-t",
+                "${workspaceFolder}/local/hamd-target.pkl",
+                "-r",
                 "${workspaceFolder}/local/hamd.pkl"
             ],
             "env": {

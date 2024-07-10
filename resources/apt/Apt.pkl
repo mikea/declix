@@ -1,5 +1,5 @@
 @go.Package { name = "mikea/declix/resources/apt" }
-module mikea.declix.resources.Apt
+module mikea.declix.resources.apt
 
 import "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.7.0#/go.pkl" 
 import "../Resources.pkl"
@@ -8,5 +8,6 @@ class Package extends Resources.Resource {
     type: "apt"
     name: String
     status: "installed" | "missing"
+    updateBeforeInstall: Boolean = false
 }
 
