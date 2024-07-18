@@ -16,9 +16,12 @@ take over existing one or live side-by-side
 with other configuration management systems.
 
 Declix can synchronize system state locally
-or remotely using ssh. Bash and coreutils
-are the only system dependencies required
-to be present on a target.
+or remotely using ssh. Bash is the only
+system dependencies required to be present
+on a target.
+
+Visit [docs/tutorial.md](docs/tutorial.md)
+for a taste of declix operations.
 
 ## Features
 
