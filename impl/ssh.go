@@ -8,6 +8,7 @@ import (
 	"mikea/declix/interfaces"
 	"mikea/declix/target"
 	"os"
+	"strings"
 
 	scp "github.com/bramvdbogaerde/go-scp"
 	"golang.org/x/crypto/ssh"
@@ -16,6 +17,33 @@ import (
 type sshExecutor struct {
 	pkl    target.SshConfig
 	client *ssh.Client
+}
+
+// MkTemp implements interfaces.CommandExcutor.
+func (executor sshExecutor) MkTemp() (string, error) {
+	tmp, err := executor.Run("mktemp")
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSuffix(tmp, "\n"), nil
+}
+
+// UploadTempNoSize implements interfaces.CommandExcutor.
+func (executor sshExecutor) UploadTempNoSize(content io.Reader) (string, error) {
+	panic("unimplemented")
+}
+
+// UploadTemp implements interfaces.CommandExcutor.
+func (executor sshExecutor) UploadTemp(content io.Reader, size int64) (string, error) {
+	tmp, err := executor.MkTemp()
+	if err != nil {
+		return "", err
+	}
+	err = executor.Upload(content, tmp, "0644", size)
+	if err != nil {
+		return "", fmt.Errorf("error uploading file: %w", err)
+	}
+	return tmp, nil
 }
 
 // Upload implements interfaces.CommandExcutor.

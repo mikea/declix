@@ -7,22 +7,25 @@ GOPATH := `go env GOPATH`
 alias w := watch
 
 watch +WATCH_TARGET='test':
-    watchexec -rc -w . -w local/ -- just {{WATCH_TARGET}}
+    watchexec -rc -w . --ignore *.pkl.go -- just {{WATCH_TARGET}}
 
 setup: install-pkl install-pkl-gen-go install-cobra-cli
 
 gen: pkl-gen-go
 
-run: status actions apply
+run: test state actions apply
 
-status:
-    export PATH=$(pwd)/bin:$PATH && go run main.go status -t {{TARGET}} -r {{RESOURCES}}
+state:
+    export PATH=$(pwd)/bin:$PATH && go run main.go state -t {{TARGET}} -r {{RESOURCES}}
 
 actions:
     export PATH=$(pwd)/bin:$PATH && go run main.go actions -t {{TARGET}} -r {{RESOURCES}}
 
 apply:
     export PATH=$(pwd)/bin:$PATH && go run main.go apply -t {{TARGET}} -r {{RESOURCES}}
+
+test:
+    go test ./...
 
 [private]
 install-pkl:
@@ -40,6 +43,7 @@ pkl-gen-go:
     export PATH=$(pwd)/bin:$PATH && {{GOPATH}}/bin/pkl-gen-go resources/apt/Apt.pkl --base-path mikea/declix
     export PATH=$(pwd)/bin:$PATH && {{GOPATH}}/bin/pkl-gen-go resources/dpkg/Dpkg.pkl --base-path mikea/declix
     export PATH=$(pwd)/bin:$PATH && {{GOPATH}}/bin/pkl-gen-go resources/filesystem/FileSystem.pkl --base-path mikea/declix
+    export PATH=$(pwd)/bin:$PATH && {{GOPATH}}/bin/pkl-gen-go content/Content.pkl --base-path mikea/declix
     export PATH=$(pwd)/bin:$PATH && {{GOPATH}}/bin/pkl-gen-go resources/Resources.pkl --base-path mikea/declix
     export PATH=$(pwd)/bin:$PATH && {{GOPATH}}/bin/pkl-gen-go target/Target.pkl --base-path mikea/declix
 

@@ -10,13 +10,7 @@ type File interface {
 
 	GetPath() string
 
-	GetContent() any
-
-	GetOwner() string
-
-	GetGroup() string
-
-	GetPermissions() string
+	GetState() any
 }
 
 var _ File = (*FileImpl)(nil)
@@ -28,13 +22,7 @@ type FileImpl struct {
 
 	Path string `pkl:"path"`
 
-	Content any `pkl:"content"`
-
-	Owner string `pkl:"owner"`
-
-	Group string `pkl:"group"`
-
-	Permissions string `pkl:"permissions"`
+	State any `pkl:"state"`
 }
 
 func (rcv *FileImpl) GetType() string {
@@ -45,18 +33,6 @@ func (rcv *FileImpl) GetPath() string {
 	return rcv.Path
 }
 
-func (rcv *FileImpl) GetContent() any {
-	return rcv.Content
-}
-
-func (rcv *FileImpl) GetOwner() string {
-	return rcv.Owner
-}
-
-func (rcv *FileImpl) GetGroup() string {
-	return rcv.Group
-}
-
-func (rcv *FileImpl) GetPermissions() string {
-	return rcv.Permissions
+func (rcv *FileImpl) GetState() any {
+	return rcv.State
 }

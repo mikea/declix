@@ -3,11 +3,13 @@ module mikea.declix.resources.dpkg
 
 import "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.7.0#/go.pkl" 
 import "../Resources.pkl"
+import "../../content/Content.pkl"
 
 class Package extends Resources.Resource {
     type: "dpkg"
     name: String
-    status: "installed" | "missing"
-    url: String
+    state: State
+    content: Content.Content
 }
 
+typealias State = "installed" | "missing";

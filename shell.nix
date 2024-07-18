@@ -6,7 +6,7 @@
         # tools
         watchexec just wget delve
         # dev
-        go_1_22
+        go_1_22 golangci-lint
     ];
     shellHook = ''
         export GOROOT=$(go env GOROOT)

@@ -4,36 +4,36 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io"
+	"mikea/declix/content"
 	"mikea/declix/interfaces"
 	"mikea/declix/resources"
-	"os"
-	"strings"
 
 	"github.com/pterm/pterm"
 	"gopkg.in/yaml.v3"
 )
 
 // RunAction implements interfaces.Resource.
-func (f FileImpl) RunAction(executor interfaces.CommandExcutor, a interfaces.Action, s interfaces.Status) error {
-	expectedStatus, err := f.ExpectedStatus()
-	if err != nil {
-		return err
-	}
+func (f FileImpl) RunAction(executor interfaces.CommandExcutor, a interfaces.Action, s interfaces.State, es interfaces.State) error {
+	expected := es.(state)
 
 	action := a.(action)
 	switch action {
 	case ToUpload:
-		return f.upload(executor, *expectedStatus)
+		return f.upload(executor, expected)
 	case ToDelete:
-		panic("not implemented")
+		_, err := executor.Run(fmt.Sprintf("sudo rm -f %s", f.Path))
+		if err != nil {
+			return err
+		}
+		return nil
 	case ToUpdate:
-		return f.update(executor, s.(status), *expectedStatus)
+		return f.update(executor, s.(state), expected)
 	default:
 		panic(fmt.Sprintf("unexpected filesystem.action: %#v", action))
 	}
 }
 
-func (f FileImpl) update(executor interfaces.CommandExcutor, status status, expectedStatus status) error {
+func (f FileImpl) update(executor interfaces.CommandExcutor, status state, expectedStatus state) error {
 	if status.Group != expectedStatus.Group {
 		if err := f.chgrp(executor, expectedStatus); err != nil {
 			return err
@@ -53,7 +53,7 @@ func (f FileImpl) update(executor interfaces.CommandExcutor, status status, expe
 	return nil
 }
 
-func (f FileImpl) chmod(executor interfaces.CommandExcutor, expectedStatus status) error {
+func (f FileImpl) chmod(executor interfaces.CommandExcutor, expectedStatus state) error {
 	_, err := executor.Run(fmt.Sprintf("sudo -S chmod %s %s", expectedStatus.Permissions, f.Path))
 	if err != nil {
 		return fmt.Errorf("error changing permissions: %w", err)
@@ -61,7 +61,7 @@ func (f FileImpl) chmod(executor interfaces.CommandExcutor, expectedStatus statu
 	return nil
 }
 
-func (f FileImpl) chown(executor interfaces.CommandExcutor, expectedStatus status) error {
+func (f FileImpl) chown(executor interfaces.CommandExcutor, expectedStatus state) error {
 	_, err := executor.Run(fmt.Sprintf("sudo -S chown %s %s", expectedStatus.Owner, f.Path))
 	if err != nil {
 		return fmt.Errorf("error changing permissions: %w", err)
@@ -69,7 +69,7 @@ func (f FileImpl) chown(executor interfaces.CommandExcutor, expectedStatus statu
 	return nil
 }
 
-func (f FileImpl) chgrp(executor interfaces.CommandExcutor, expectedStatus status) error {
+func (f FileImpl) chgrp(executor interfaces.CommandExcutor, expectedStatus state) error {
 	_, err := executor.Run(fmt.Sprintf("sudo -S chgrp %s %s", expectedStatus.Group, f.Path))
 	if err != nil {
 		return fmt.Errorf("error changing permissions: %w", err)
@@ -77,22 +77,20 @@ func (f FileImpl) chgrp(executor interfaces.CommandExcutor, expectedStatus statu
 	return nil
 }
 
-func (f FileImpl) upload(executor interfaces.CommandExcutor, expectedStatus status) error {
-	tmp, err := executor.Run("mktemp")
-	if err != nil {
-		return err
-	}
-	tmp = strings.TrimSuffix(tmp, "\n")
+func (f FileImpl) openContent() (io.ReadCloser, int64, error) {
+	return content.OpenContent(f.State.(*Present).Content)
+}
 
+func (f FileImpl) upload(executor interfaces.CommandExcutor, expectedStatus state) error {
 	content, size, err := f.openContent()
 	if err != nil {
 		return err
 	}
 	defer content.Close()
 
-	err = executor.Upload(content, tmp, "0644", size)
+	tmp, err := executor.UploadTemp(content, size)
 	if err != nil {
-		return fmt.Errorf("error uploading file: %w", err)
+		return err
 	}
 
 	_, err = executor.Run(fmt.Sprintf("sudo -S mv %s %s", tmp, f.Path))
@@ -114,21 +112,18 @@ func (f FileImpl) upload(executor interfaces.CommandExcutor, expectedStatus stat
 }
 
 // DetermineAction implements interfaces.Resource.
-func (f FileImpl) DetermineAction(executor interfaces.CommandExcutor, s interfaces.Status) (interfaces.Action, error) {
-	status := s.(status)
-	expectedStatus, err := f.ExpectedStatus()
-	if err != nil {
-		return nil, err
-	}
+func (f FileImpl) DetermineAction(executor interfaces.CommandExcutor, s interfaces.State, es interfaces.State) (interfaces.Action, error) {
+	expected := es.(state)
+	state := s.(state)
 
-	if expectedStatus.Exists {
-		if status.Exists {
-			if status.Sha256 != expectedStatus.Sha256 {
+	if expected.Exists {
+		if state.Exists {
+			if state.Sha256 != expected.Sha256 {
 				return ToUpload, nil
 			}
-			if status.Owner != expectedStatus.Owner ||
-				status.Group != expectedStatus.Group ||
-				status.Permissions != expectedStatus.Permissions {
+			if state.Owner != expected.Owner ||
+				state.Group != expected.Group ||
+				state.Permissions != expected.Permissions {
 				return ToUpdate, nil
 			}
 
@@ -136,45 +131,12 @@ func (f FileImpl) DetermineAction(executor interfaces.CommandExcutor, s interfac
 		}
 
 		return ToUpload, nil
-	} else {
-		panic("not implemented")
 	}
+
+	return ToDelete, nil
 }
 
-type noCloseReadCloser struct {
-	reader io.Reader
-}
-
-// Close implements io.ReadCloser.
-func (noCloseReadCloser) Close() error {
-	return nil
-}
-
-// Read implements io.ReadCloser.
-func (r noCloseReadCloser) Read(p []byte) (n int, err error) {
-	return r.reader.Read(p)
-}
-
-func (f FileImpl) openContent() (io.ReadCloser, int64, error) {
-	switch c := f.Content.(type) {
-	case *FileContent:
-		f, err := os.Open(c.File)
-		if err != nil {
-			return nil, 0, err
-		}
-		stat, err := f.Stat()
-		if err != nil {
-			return nil, 0, err
-		}
-		return f, stat.Size(), nil
-	case string:
-		return noCloseReadCloser{strings.NewReader(c)}, int64(len(c)), nil
-	default:
-		panic(fmt.Sprintf("unsupported content %T", c))
-	}
-}
-
-type status struct {
+type state struct {
 	Exists      bool
 	Size        int64
 	Sha256      string
@@ -184,7 +146,7 @@ type status struct {
 }
 
 // StyledString implements interfaces.ResouceStatus.
-func (s status) StyledString(resource interfaces.Resource) string {
+func (s state) StyledString(resource interfaces.Resource) string {
 	if !s.Exists {
 		return pterm.FgRed.Sprint("missing")
 	} else {
@@ -213,26 +175,8 @@ const (
 	ToDelete
 )
 
-// ExpectedStatusStyledString implements interfaces.Resource.
-func (f FileImpl) ExpectedStatusStyledString() (string, error) {
-	expectedStatus, err := f.ExpectedStatus()
-	if err != nil {
-		return "", err
-	}
-
-	return pterm.FgGreen.Sprint(
-		expectedStatus.Sha256[:8],
-		" ",
-		expectedStatus.Owner,
-		":",
-		expectedStatus.Group,
-		" ",
-		expectedStatus.Permissions,
-	), nil
-}
-
-// DetermineStatus implements interfaces.Resource.
-func (f FileImpl) DetermineStatus(executor interfaces.CommandExcutor) (interfaces.Status, error) {
+// DetermineState implements interfaces.Resource.
+func (f FileImpl) DetermineState(executor interfaces.CommandExcutor) (interfaces.State, error) {
 	out, err := executor.Run(fmt.Sprintf(
 		`if [ ! -f "%s" ]; then 
 			echo "exists: false"; 
@@ -249,9 +193,11 @@ func (f FileImpl) DetermineStatus(executor interfaces.CommandExcutor) (interface
 	if err != nil {
 		return nil, err
 	}
-	status := status{}
-	yaml.Unmarshal([]byte(out), &status)
-	return status, nil
+	state := state{}
+	if err := yaml.Unmarshal([]byte(out), &state); err != nil {
+		return nil, err
+	}
+	return state, nil
 }
 
 // Id implements interfaces.Resource.
@@ -264,25 +210,37 @@ func (f FileImpl) Pkl() resources.Resource {
 	return f
 }
 
-func (f FileImpl) ExpectedStatus() (*status, error) {
-	content, size, err := f.openContent()
-	if err != nil {
-		return nil, err
-	}
-	defer content.Close()
+func (f FileImpl) ExpectedState() (interfaces.State, error) {
+	switch s := f.State.(type) {
+	case *Missing:
+		return state{
+			Exists: false,
+		}, nil
+	case *Present:
+		content, size, err := f.openContent()
+		if err != nil {
+			return nil, err
+		}
+		defer content.Close()
 
-	hasher := sha256.New()
-	if _, err := io.Copy(hasher, content); err != nil {
-		return nil, err
-	}
-	sha256 := fmt.Sprintf("%x", string(hasher.Sum(nil)))
+		hasher := sha256.New()
+		if _, err := io.Copy(hasher, content); err != nil {
+			return nil, err
+		}
+		sha256 := fmt.Sprintf("%x", string(hasher.Sum(nil)))
 
-	return &status{
-		Exists:      true,
-		Size:        size,
-		Sha256:      sha256,
-		Owner:       f.Owner,
-		Group:       f.Group,
-		Permissions: f.Permissions,
-	}, nil
+		return state{
+			Exists:      true,
+			Size:        size,
+			Sha256:      sha256,
+			Owner:       s.Owner,
+			Group:       s.Group,
+			Permissions: s.Permissions,
+		}, nil
+
+	default:
+		panic(fmt.Sprintf("unsupported state %T", s))
+
+	}
+
 }

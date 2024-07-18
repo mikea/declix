@@ -48,7 +48,7 @@ var applyCmd = &cobra.Command{
 		}
 		defer executor.Close()
 
-		statuses, errors := impl.DetermineStatuses(resources, executor, *progress)
+		states, expectedStates, errors := impl.DetermineStates(resources, executor, *progress)
 		progress.Stop()
 
 		actions := make([]interfaces.Action, len(resources))
@@ -57,7 +57,7 @@ var applyCmd = &cobra.Command{
 			if errors[i] != nil {
 				continue
 			}
-			actions[i], errors[i] = res.DetermineAction(executor, statuses[i])
+			actions[i], errors[i] = res.DetermineAction(executor, states[i], expectedStates[i])
 			if actions[i] != nil {
 				totalActions += 1
 			}
@@ -76,7 +76,7 @@ var applyCmd = &cobra.Command{
 			progress.UpdateTitle(action.StyledString(resources[i]))
 			progress.Increment()
 
-			err = resources[i].RunAction(executor, actions[i], statuses[i])
+			err = resources[i].RunAction(executor, actions[i], states[i], expectedStates[i])
 			if err != nil {
 				pterm.Println(pterm.BgRed.Sprint("E ", actions[i].StyledString(resources[i])), err)
 			} else {

@@ -3,11 +3,29 @@ module mikea.declix.resources.apt
 
 import "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.7.0#/go.pkl" 
 import "../Resources.pkl"
+import "../dpkg/Dpkg.pkl"
 
 class Package extends Resources.Resource {
     type: "apt"
     name: String
-    status: "installed" | "missing"
+    state: Dpkg.State
     updateBeforeInstall: Boolean = false
 }
 
+function install(names: Listing<String>): Listing<Resources.Resource> = new Listing {
+    for (pkg in names) {
+        new Package {
+            name = pkg
+            state = "installed"
+        }
+    }
+}
+
+function remove(names: Listing<String>): Listing<Resources.Resource> = new Listing {
+    for (pkg in names) {
+        new Package {
+            name = pkg
+            state = "missing"
+        }
+    }
+}

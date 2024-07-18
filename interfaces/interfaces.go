@@ -9,20 +9,23 @@ type Resource interface {
 	Id() string
 	Pkl() resources.Resource
 
-	ExpectedStatusStyledString() (string, error)
-	DetermineStatus(executor CommandExcutor) (Status, error)
-	DetermineAction(executor CommandExcutor, status Status) (Action, error)
-	RunAction(executor CommandExcutor, action Action, status Status) error
+	ExpectedState() (State, error)
+	DetermineState(executor CommandExcutor) (State, error)
+	DetermineAction(executor CommandExcutor, state State, expectedState State) (Action, error)
+	RunAction(executor CommandExcutor, action Action, state State, expectedState State) error
 }
 
-type Status interface {
+type State interface {
 	StyledString(resource Resource) string
 }
 
 type CommandExcutor interface {
+	Close() error
+	MkTemp() (string, error)
 	Run(command string) (string, error)
 	Upload(content io.Reader, remotePath string, permissions string, size int64) error
-	Close() error
+	UploadTemp(content io.Reader, size int64) (string, error)
+	UploadTempNoSize(content io.Reader) (string, error)
 }
 
 type Action interface {

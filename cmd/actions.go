@@ -51,13 +51,13 @@ th the desired state.`,
 		defer executor.Close()
 
 		pterm.FgGray.Println("Checking...")
-		statuses, errors := impl.DetermineStatuses(resources, executor, *progress)
+		states, expectedStates, errors := impl.DetermineStates(resources, executor, *progress)
 		progress.Stop()
 
 		actions := make([]interfaces.Action, len(resources))
 		for i, res := range resources {
 			if errors[i] == nil {
-				actions[i], errors[i] = res.DetermineAction(executor, statuses[i])
+				actions[i], errors[i] = res.DetermineAction(executor, states[i], expectedStates[i])
 			}
 		}
 

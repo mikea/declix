@@ -6,5 +6,6 @@ import "github.com/apple/pkl-go/pkl"
 func init() {
 	pkl.RegisterMapping("mikea.declix.resources.FileSystem", FileSystem{})
 	pkl.RegisterMapping("mikea.declix.resources.FileSystem#File", FileImpl{})
-	pkl.RegisterMapping("mikea.declix.resources.FileSystem#FileContent", FileContent{})
+	pkl.RegisterMapping("mikea.declix.resources.FileSystem#Present", Present{})
+	pkl.RegisterMapping("mikea.declix.resources.FileSystem#Missing", Missing{})
 }

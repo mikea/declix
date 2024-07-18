@@ -3,17 +3,24 @@ module mikea.declix.resources.FileSystem
 
 import "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.7.0#/go.pkl" 
 import "../Resources.pkl"
+import "../../content/Content.pkl"
 
 
 class File extends Resources.Resource  {
     type: "file"
     path: String
-    content: String | FileContent
+    state: State
+}
+
+typealias State = Present | Missing
+
+class Present {
+    content: Content.Content
     owner: String
     group: String
     permissions: String
 }
 
-class FileContent {
-    file: String
+class Missing {
+
 }

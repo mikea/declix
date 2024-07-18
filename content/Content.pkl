@@ -1,0 +1,14 @@
+@go.Package { name = "mikea/declix/content" }
+module mikea.declix.Content
+
+import "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.7.0#/go.pkl" 
+
+typealias Content = String | File | Url;
+
+class File {
+    file: String
+}
+
+class Url {
+    url: String
+}

@@ -15,15 +15,15 @@ import (
 )
 
 var statusCmd = &cobra.Command{
-	Use:     "status",
+	Use:     "state",
 	Args:    cobra.ExactArgs(0),
 	GroupID: "main",
-	Short:   "Determine status of every resource",
-	Long: `Determine status of every resource. 
+	Short:   "Determine state of every resource",
+	Long: `Determine state of every resource. 
 	
-Outputs the table of the current and desired resource status.`,
+Outputs the table of the current and desired resource state.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return executeStatus()
+		return executeState()
 	},
 }
 
@@ -31,7 +31,7 @@ func init() {
 	rootCmd.AddCommand(statusCmd)
 }
 
-func executeStatus() error {
+func executeState() error {
 	targetPkl, err := target.LoadFromPath(context.Background(), targetFile)
 	if err != nil {
 		return fmt.Errorf("loading target file: %w", err)
@@ -59,23 +59,27 @@ func executeStatus() error {
 	}
 	defer executor.Close()
 
-	statuses, errors := impl.DetermineStatuses(resources, executor, *progress)
+	states, expectedStates, errors := impl.DetermineStates(resources, executor, *progress)
 	progress.Stop()
 
-	tableData := make(pterm.TableData, len(statuses)+1)
-	tableData[0] = []string{"Resource Id", "Status", "Expected"}
-	for i, status := range statuses {
-		var statusString string
-		if errors[i] != nil {
-			statusString = pterm.BgRed.Sprint("ERROR")
+	tableData := make(pterm.TableData, len(states)+1)
+	tableData[0] = []string{"Resource Id", "Current State", "Expected State"}
+	for i, state := range states {
+		var stateStr string
+		var expectedStr string
+
+		if state != nil {
+			stateStr = state.StyledString(resources[i])
 		} else {
-			statusString = status.StyledString(resources[i])
+			stateStr = pterm.BgRed.Sprint("ERROR")
 		}
-		expected, err := resources[i].ExpectedStatusStyledString()
-		if err != nil {
-			return err
+		if expectedStates[i] != nil {
+			expectedStr = expectedStates[i].StyledString(resources[i])
+		} else {
+			expectedStr = pterm.BgRed.Sprint("ERROR")
 		}
-		tableData[i+1] = []string{resources[i].Id(), statusString, expected}
+
+		tableData[i+1] = []string{resources[i].Id(), stateStr, expectedStr}
 	}
 
 	pterm.DefaultTable.WithHasHeader().WithHeaderRowSeparator("-").WithData(tableData).Render()

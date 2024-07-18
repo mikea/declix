@@ -1,36 +1,58 @@
 import "../resources/filesystem/FileSystem.pkl" as FS
 import "../resources/apt/Apt.pkl"
 import "../resources/Resources.pkl"
+import "../content/Content.pkl"
 
 url = "https://download.zerotier.com/"
 codename = "bookworm"
 
-function installed(): Listing<Resources.Resource> = new Listing {
+function install(): Listing<Resources.Resource> = new Listing {
     new FS.File {
         path = "/etc/apt/trusted.gpg.d/zerotier.com.gpg"
-        content = new FS.FileContent {
-            file = "modules/zerotier.com.gpg"
+        state = new FS.Present {
+            content = new Content.File {
+                file = "modules/zerotier.com.gpg"
+            }
+            owner = "root"
+            group = "root"
+            permissions = "644"
         }
-        owner = "root"
-        group = "root"
-        permissions = "644"
     }
 
     new FS.File {
         path = "/etc/apt/sources.list.d/zerotier.list"
-        owner = "root"
-        group = "root"
-        permissions = "644"
-        content = "deb [signed-by=/etc/apt/trusted.gpg.d/zerotier.com.gpg] \(url)debian/\(codename) \(codename) main"
+        state = new FS.Present {
+            owner = "root"
+            group = "root"
+            permissions = "644"
+            content = "deb [signed-by=/etc/apt/trusted.gpg.d/zerotier.com.gpg] \(url)debian/\(codename) \(codename) main"
+        }
     }
 
     new Apt.Package {
         name = "zerotier-one"
-        status = "installed"
+        state = "installed"
         updateBeforeInstall = true
     }
 }
 
-function enabled(): Listing<Resources.Resource> = new Listing {
-    ...installed()
+function remove() : Listing<Resources.Resource> = new Listing {
+    new Apt.Package {
+        name = "zerotier-one"
+        state = "missing"
+        updateBeforeInstall = true
+    }
+    new FS.File {
+        path = "/etc/apt/sources.list.d/zerotier.list"
+        state = new FS.Missing {}
+    }
+    new FS.File {
+        path = "/etc/apt/trusted.gpg.d/zerotier.com.gpg"
+        state = new FS.Missing {}
+    }
+}
+
+function enable(): Listing<Resources.Resource> = new Listing {
+    ...install()
+    // todo
 }

@@ -1,7 +1,10 @@
 // Code generated from Pkl module `mikea.declix.resources.dpkg`. DO NOT EDIT.
 package dpkg
 
-import "mikea/declix/resources"
+import (
+	"mikea/declix/resources"
+	"mikea/declix/resources/dpkg/state"
+)
 
 type Package interface {
 	resources.Resource
@@ -10,9 +13,9 @@ type Package interface {
 
 	GetName() string
 
-	GetStatus() string
+	GetState() state.State
 
-	GetUrl() string
+	GetContent() any
 }
 
 var _ Package = (*PackageImpl)(nil)
@@ -24,9 +27,9 @@ type PackageImpl struct {
 
 	Name string `pkl:"name"`
 
-	Status string `pkl:"status"`
+	State state.State `pkl:"state"`
 
-	Url string `pkl:"url"`
+	Content any `pkl:"content"`
 }
 
 func (rcv *PackageImpl) GetType() string {
@@ -37,10 +40,10 @@ func (rcv *PackageImpl) GetName() string {
 	return rcv.Name
 }
 
-func (rcv *PackageImpl) GetStatus() string {
-	return rcv.Status
+func (rcv *PackageImpl) GetState() state.State {
+	return rcv.State
 }
 
-func (rcv *PackageImpl) GetUrl() string {
-	return rcv.Url
+func (rcv *PackageImpl) GetContent() any {
+	return rcv.Content
 }

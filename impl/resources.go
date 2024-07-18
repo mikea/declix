@@ -4,9 +4,12 @@ import (
 	"fmt"
 	"mikea/declix/interfaces"
 	"mikea/declix/resources"
-	"mikea/declix/resources/apt"
 
 	"github.com/pterm/pterm"
+
+	_ "mikea/declix/resources/apt"
+	_ "mikea/declix/resources/dpkg"
+	_ "mikea/declix/resources/filesystem"
 )
 
 func CreateResources(pkl []resources.Resource) []interfaces.Resource {
@@ -20,23 +23,25 @@ func CreateResources(pkl []resources.Resource) []interfaces.Resource {
 func CreateResource(r resources.Resource) interfaces.Resource {
 	if res, ok := r.(interfaces.Resource); ok {
 		return res
-	}
-	switch v := r.(type) {
-	case apt.Package:
-		return apt.New(v)
-	default:
-		panic(fmt.Sprintf("unexpected pkl.Resource: %#v", v))
+	} else {
+		panic(fmt.Sprintf("unexpected pkl.Resource: %#v", r))
 	}
 }
 
-func DetermineStatuses(resources []interfaces.Resource, executor interfaces.CommandExcutor, progress pterm.ProgressbarPrinter) ([]interfaces.Status, []error) {
-	statuses := make([]interfaces.Status, len(resources))
+func DetermineStates(resources []interfaces.Resource, executor interfaces.CommandExcutor, progress pterm.ProgressbarPrinter) ([]interfaces.State, []interfaces.State, []error) {
+	states := make([]interfaces.State, len(resources))
+	expected := make([]interfaces.State, len(resources))
 	errors := make([]error, len(resources))
 	for i, res := range resources {
 		progress.UpdateTitle(res.Id())
 		progress.Increment()
-		statuses[i], errors[i] = res.DetermineStatus(executor)
+
+		expected[i], errors[i] = res.ExpectedState()
+		if errors[i] != nil {
+			continue
+		}
+		states[i], errors[i] = res.DetermineState(executor)
 	}
 
-	return statuses, errors
+	return states, expected, errors
 }
