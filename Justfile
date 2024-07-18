@@ -9,7 +9,8 @@ alias w := watch
 watch +WATCH_TARGET='test':
     watchexec -rc -w . --ignore *.pkl.go -- just {{WATCH_TARGET}}
 
-setup: install-pkl install-pkl-gen-go install-cobra-cli
+setup: install
+install: install-pkl install-pkl-gen-go install-cobra-cli install-go-releaser
 
 gen: pkl-gen-go
 
@@ -50,3 +51,7 @@ pkl-gen-go:
 [private]
 install-cobra-cli:
     go install github.com/spf13/cobra-cli@latest
+
+[private]
+install-go-releaser:
+    go install github.com/goreleaser/goreleaser/v2@latest

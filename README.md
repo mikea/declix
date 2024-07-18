@@ -54,7 +54,6 @@ but that is not very typical.
 
 - [pkl-cli](https://pkl-lang.org/main/current/pkl-cli/index.html#installation)
   is installed, and found in `PATH` under `pkl` name.
-- go
 
 ### Target Requirements
 
