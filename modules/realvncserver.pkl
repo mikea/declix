@@ -1,0 +1,11 @@
+import "../resources/Resources.pkl"
+import "../resources/dpkg/Dpkg.pkl"
+
+
+function installed(): Listing<Resources.Resource> = new Listing {
+    new Dpkg.Package {
+        name = "realvnc-vnc-server"
+        status = "installed"
+        url = "https://downloads.realvnc.com/download/file/vnc.files/VNC-Server-7.12.0-Linux-ARM64.deb"
+    }
+}

@@ -34,14 +34,14 @@ func init() {
 func executeStatus() error {
 	targetPkl, err := target.LoadFromPath(context.Background(), targetFile)
 	if err != nil {
-		return err
+		return fmt.Errorf("loading target file: %w", err)
 	}
 	target := targetPkl.Target
 	pterm.Printfln("Target: %v", target)
 
 	resourcesPkl, err := resources.LoadFromPath(context.Background(), resourcesFile)
 	if err != nil {
-		return err
+		return fmt.Errorf("loading resources file: %w", err)
 	}
 
 	resources := impl.CreateResources(resourcesPkl.Resources)

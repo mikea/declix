@@ -5,7 +5,6 @@ import (
 	"mikea/declix/interfaces"
 	"mikea/declix/resources"
 	"mikea/declix/resources/apt"
-	"mikea/declix/resources/filesystem"
 
 	"github.com/pterm/pterm"
 )
@@ -18,10 +17,11 @@ func CreateResources(pkl []resources.Resource) []interfaces.Resource {
 	return resources
 }
 
-func CreateResource(expected resources.Resource) interfaces.Resource {
-	switch v := expected.(type) {
-	case filesystem.File:
-		return filesystem.New(v)
+func CreateResource(r resources.Resource) interfaces.Resource {
+	if res, ok := r.(interfaces.Resource); ok {
+		return res
+	}
+	switch v := r.(type) {
 	case apt.Package:
 		return apt.New(v)
 	default:

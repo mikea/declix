@@ -13,17 +13,9 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func New(pkl File) interfaces.Resource {
-	return resource{pkl: pkl}
-}
-
-type resource struct {
-	pkl File
-}
-
 // RunAction implements interfaces.Resource.
-func (r resource) RunAction(executor interfaces.CommandExcutor, a interfaces.Action, s interfaces.Status) error {
-	expectedStatus, err := r.ExpectedStatus()
+func (f FileImpl) RunAction(executor interfaces.CommandExcutor, a interfaces.Action, s interfaces.Status) error {
+	expectedStatus, err := f.ExpectedStatus()
 	if err != nil {
 		return err
 	}
@@ -31,29 +23,29 @@ func (r resource) RunAction(executor interfaces.CommandExcutor, a interfaces.Act
 	action := a.(action)
 	switch action {
 	case ToUpload:
-		return r.upload(executor, *expectedStatus)
+		return f.upload(executor, *expectedStatus)
 	case ToDelete:
 		panic("not implemented")
 	case ToUpdate:
-		return r.update(executor, s.(status), *expectedStatus)
+		return f.update(executor, s.(status), *expectedStatus)
 	default:
 		panic(fmt.Sprintf("unexpected filesystem.action: %#v", action))
 	}
 }
 
-func (r resource) update(executor interfaces.CommandExcutor, status status, expectedStatus status) error {
+func (f FileImpl) update(executor interfaces.CommandExcutor, status status, expectedStatus status) error {
 	if status.Group != expectedStatus.Group {
-		if err := r.chgrp(executor, expectedStatus); err != nil {
+		if err := f.chgrp(executor, expectedStatus); err != nil {
 			return err
 		}
 	}
 	if status.Owner != expectedStatus.Owner {
-		if err := r.chown(executor, expectedStatus); err != nil {
+		if err := f.chown(executor, expectedStatus); err != nil {
 			return err
 		}
 	}
 	if status.Permissions != expectedStatus.Permissions {
-		if err := r.chmod(executor, expectedStatus); err != nil {
+		if err := f.chmod(executor, expectedStatus); err != nil {
 			return err
 		}
 	}
@@ -61,38 +53,38 @@ func (r resource) update(executor interfaces.CommandExcutor, status status, expe
 	return nil
 }
 
-func (r resource) chmod(executor interfaces.CommandExcutor, expectedStatus status) error {
-	_, err := executor.Run(fmt.Sprintf("sudo -S chmod %s %s", expectedStatus.Permissions, r.pkl.GetPath()))
+func (f FileImpl) chmod(executor interfaces.CommandExcutor, expectedStatus status) error {
+	_, err := executor.Run(fmt.Sprintf("sudo -S chmod %s %s", expectedStatus.Permissions, f.Path))
 	if err != nil {
 		return fmt.Errorf("error changing permissions: %w", err)
 	}
 	return nil
 }
 
-func (r resource) chown(executor interfaces.CommandExcutor, expectedStatus status) error {
-	_, err := executor.Run(fmt.Sprintf("sudo -S chown %s %s", expectedStatus.Owner, r.pkl.GetPath()))
+func (f FileImpl) chown(executor interfaces.CommandExcutor, expectedStatus status) error {
+	_, err := executor.Run(fmt.Sprintf("sudo -S chown %s %s", expectedStatus.Owner, f.Path))
 	if err != nil {
 		return fmt.Errorf("error changing permissions: %w", err)
 	}
 	return nil
 }
 
-func (r resource) chgrp(executor interfaces.CommandExcutor, expectedStatus status) error {
-	_, err := executor.Run(fmt.Sprintf("sudo -S chgrp %s %s", expectedStatus.Group, r.pkl.GetPath()))
+func (f FileImpl) chgrp(executor interfaces.CommandExcutor, expectedStatus status) error {
+	_, err := executor.Run(fmt.Sprintf("sudo -S chgrp %s %s", expectedStatus.Group, f.Path))
 	if err != nil {
 		return fmt.Errorf("error changing permissions: %w", err)
 	}
 	return nil
 }
 
-func (r resource) upload(executor interfaces.CommandExcutor, expectedStatus status) error {
+func (f FileImpl) upload(executor interfaces.CommandExcutor, expectedStatus status) error {
 	tmp, err := executor.Run("mktemp")
 	if err != nil {
 		return err
 	}
 	tmp = strings.TrimSuffix(tmp, "\n")
 
-	content, size, err := r.GetContent()
+	content, size, err := f.openContent()
 	if err != nil {
 		return err
 	}
@@ -103,18 +95,18 @@ func (r resource) upload(executor interfaces.CommandExcutor, expectedStatus stat
 		return fmt.Errorf("error uploading file: %w", err)
 	}
 
-	_, err = executor.Run(fmt.Sprintf("sudo -S mv %s %s", tmp, r.pkl.GetPath()))
+	_, err = executor.Run(fmt.Sprintf("sudo -S mv %s %s", tmp, f.Path))
 	if err != nil {
 		return fmt.Errorf("error copying file: %w", err)
 	}
 
-	if err := r.chown(executor, expectedStatus); err != nil {
+	if err := f.chown(executor, expectedStatus); err != nil {
 		return err
 	}
-	if err := r.chgrp(executor, expectedStatus); err != nil {
+	if err := f.chgrp(executor, expectedStatus); err != nil {
 		return err
 	}
-	if err := r.chmod(executor, expectedStatus); err != nil {
+	if err := f.chmod(executor, expectedStatus); err != nil {
 		return err
 	}
 
@@ -122,9 +114,9 @@ func (r resource) upload(executor interfaces.CommandExcutor, expectedStatus stat
 }
 
 // DetermineAction implements interfaces.Resource.
-func (r resource) DetermineAction(executor interfaces.CommandExcutor, s interfaces.Status) (interfaces.Action, error) {
+func (f FileImpl) DetermineAction(executor interfaces.CommandExcutor, s interfaces.Status) (interfaces.Action, error) {
 	status := s.(status)
-	expectedStatus, err := r.ExpectedStatus()
+	expectedStatus, err := f.ExpectedStatus()
 	if err != nil {
 		return nil, err
 	}
@@ -163,8 +155,8 @@ func (r noCloseReadCloser) Read(p []byte) (n int, err error) {
 	return r.reader.Read(p)
 }
 
-func (r resource) GetContent() (io.ReadCloser, int64, error) {
-	switch c := r.pkl.GetContent().(type) {
+func (f FileImpl) openContent() (io.ReadCloser, int64, error) {
+	switch c := f.Content.(type) {
 	case *FileContent:
 		f, err := os.Open(c.File)
 		if err != nil {
@@ -222,8 +214,8 @@ const (
 )
 
 // ExpectedStatusStyledString implements interfaces.Resource.
-func (r resource) ExpectedStatusStyledString() (string, error) {
-	expectedStatus, err := r.ExpectedStatus()
+func (f FileImpl) ExpectedStatusStyledString() (string, error) {
+	expectedStatus, err := f.ExpectedStatus()
 	if err != nil {
 		return "", err
 	}
@@ -240,7 +232,7 @@ func (r resource) ExpectedStatusStyledString() (string, error) {
 }
 
 // DetermineStatus implements interfaces.Resource.
-func (r resource) DetermineStatus(executor interfaces.CommandExcutor) (interfaces.Status, error) {
+func (f FileImpl) DetermineStatus(executor interfaces.CommandExcutor) (interfaces.Status, error) {
 	out, err := executor.Run(fmt.Sprintf(
 		`if [ ! -f "%s" ]; then 
 			echo "exists: false"; 
@@ -250,9 +242,9 @@ func (r resource) DetermineStatus(executor interfaces.CommandExcutor) (interface
 			echo "sha256: $hash" &&
 			stat --printf="size: %%s\nowner: %%U\ngroup: %%G\npermissions: %%a\n" %s
 		fi`,
-		r.pkl.GetPath(),
-		r.pkl.GetPath(),
-		r.pkl.GetPath(),
+		f.Path,
+		f.Path,
+		f.Path,
 	))
 	if err != nil {
 		return nil, err
@@ -263,17 +255,17 @@ func (r resource) DetermineStatus(executor interfaces.CommandExcutor) (interface
 }
 
 // Id implements interfaces.Resource.
-func (r resource) Id() string {
-	return fmt.Sprintf("%s:%s", r.pkl.GetType(), r.pkl.GetPath())
+func (f FileImpl) Id() string {
+	return fmt.Sprintf("%s:%s", f.Type, f.Path)
 }
 
 // Pkl implements interfaces.Resource.
-func (r resource) Pkl() resources.Resource {
-	return r.pkl
+func (f FileImpl) Pkl() resources.Resource {
+	return f
 }
 
-func (r resource) ExpectedStatus() (*status, error) {
-	content, size, err := r.GetContent()
+func (f FileImpl) ExpectedStatus() (*status, error) {
+	content, size, err := f.openContent()
 	if err != nil {
 		return nil, err
 	}
@@ -289,8 +281,8 @@ func (r resource) ExpectedStatus() (*status, error) {
 		Exists:      true,
 		Size:        size,
 		Sha256:      sha256,
-		Owner:       r.pkl.GetOwner(),
-		Group:       r.pkl.GetGroup(),
-		Permissions: r.pkl.GetPermissions(),
+		Owner:       f.Owner,
+		Group:       f.Group,
+		Permissions: f.Permissions,
 	}, nil
 }

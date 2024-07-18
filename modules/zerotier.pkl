@@ -1,4 +1,4 @@
-import "../resources/filesystem/FileSystem.pkl" as fs
+import "../resources/filesystem/FileSystem.pkl" as FS
 import "../resources/apt/Apt.pkl"
 import "../resources/Resources.pkl"
 
@@ -6,17 +6,17 @@ url = "https://download.zerotier.com/"
 codename = "bookworm"
 
 function installed(): Listing<Resources.Resource> = new Listing {
-    new fs.File {
+    new FS.File {
         path = "/etc/apt/trusted.gpg.d/zerotier.com.gpg"
-        content = new fs.FileContent {
-            file = "local/zerotier.com.gpg"
+        content = new FS.FileContent {
+            file = "modules/zerotier.com.gpg"
         }
         owner = "root"
         group = "root"
         permissions = "644"
     }
 
-    new fs.File {
+    new FS.File {
         path = "/etc/apt/sources.list.d/zerotier.list"
         owner = "root"
         group = "root"

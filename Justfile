@@ -38,6 +38,7 @@ install-pkl-gen-go:
 pkl-gen-go:
     find . -name "*.pkl.go" -exec rm -f {} +
     export PATH=$(pwd)/bin:$PATH && {{GOPATH}}/bin/pkl-gen-go resources/apt/Apt.pkl --base-path mikea/declix
+    export PATH=$(pwd)/bin:$PATH && {{GOPATH}}/bin/pkl-gen-go resources/dpkg/Dpkg.pkl --base-path mikea/declix
     export PATH=$(pwd)/bin:$PATH && {{GOPATH}}/bin/pkl-gen-go resources/filesystem/FileSystem.pkl --base-path mikea/declix
     export PATH=$(pwd)/bin:$PATH && {{GOPATH}}/bin/pkl-gen-go resources/Resources.pkl --base-path mikea/declix
     export PATH=$(pwd)/bin:$PATH && {{GOPATH}}/bin/pkl-gen-go target/Target.pkl --base-path mikea/declix
