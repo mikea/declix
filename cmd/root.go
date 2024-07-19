@@ -8,11 +8,13 @@ import (
 
 var targetFile string
 var resourcesFile string
+var version = "DEV"
 
 var rootCmd = &cobra.Command{
 	Use:          "declix",
 	Short:        "Declarative Linux",
 	SilenceUsage: true,
+	Version:      version,
 	Long: `Declarative Linux.
 
 Declix is a CLI tool to manage Linux systems in a declartive way.`,

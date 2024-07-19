@@ -16,8 +16,6 @@ type File interface {
 var _ File = (*FileImpl)(nil)
 
 type FileImpl struct {
-	*resources.ResourceImpl
-
 	Type string `pkl:"type"`
 
 	Path string `pkl:"path"`

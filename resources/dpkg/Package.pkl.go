@@ -21,8 +21,6 @@ type Package interface {
 var _ Package = (*PackageImpl)(nil)
 
 type PackageImpl struct {
-	*resources.ResourceImpl
-
 	Type string `pkl:"type"`
 
 	Name string `pkl:"name"`

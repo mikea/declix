@@ -1,4 +1,3 @@
-# see https://nixos.wiki/wiki/Go
 { pkgs ? import <nixpkgs> {} }:
   pkgs.mkShell {
     hardeningDisable = [ "fortify" ];
@@ -11,5 +10,6 @@
     shellHook = ''
         export GOROOT=$(go env GOROOT)
         export GOPATH=$(go env GOPATH)
+        export PATH=$PATH:$GOPATH/bin
     '';
 }

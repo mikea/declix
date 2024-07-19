@@ -3,8 +3,3 @@ package resources
 
 type Resource interface {
 }
-
-var _ Resource = (*ResourceImpl)(nil)
-
-type ResourceImpl struct {
-}

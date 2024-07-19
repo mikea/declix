@@ -7,7 +7,7 @@ GOPATH := `go env GOPATH`
 alias w := watch
 
 watch +WATCH_TARGET='test':
-    watchexec -rc -w . --ignore *.pkl.go -- just {{WATCH_TARGET}}
+    watchexec -rc -w . --ignore *.pkl.go --ignore main --print-events -- just {{WATCH_TARGET}}
 
 setup: install
 install: install-pkl install-pkl-gen-go install-cobra-cli install-go-releaser
@@ -27,6 +27,18 @@ apply:
 
 test:
     go test ./...
+
+build:
+    go build main.go
+    mv main bin/declix
+
+release version: clean dist (build-release version) (gen-pkl version)
+
+dist:
+    mkdir dist
+
+clean:
+    rm -rf dist
 
 [private]
 install-pkl:
@@ -55,3 +67,18 @@ install-cobra-cli:
 [private]
 install-go-releaser:
     go install github.com/goreleaser/goreleaser/v2@latest
+
+[private]
+build-release version:
+    GOOS="linux" GOARCH="amd64"  go build -o dist/declix
+    zip dist/declix-{{version}}-linux-amd64.zip dist/declix
+
+[private]
+gen-pkl version:
+    #!/usr/bin/env bash
+    set -euxo pipefail
+    find . -type f -name "*.pkl" -print0 | zip dist/pkl@{{version}}.zip -@
+    cp pkl.json.tpl dist/pkl@{{version}}.json
+    sed -i "s/VERSION/{{version}}/g" dist/pkl@{{version}}.json
+    read -r SHA256 _ < <(sha256sum dist/pkl@{{version}}.zip) 
+    sed -i "s/SHA256/$SHA256/g" dist/pkl@{{version}}.json
