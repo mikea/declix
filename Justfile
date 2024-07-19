@@ -80,8 +80,8 @@ install-go-releaser:
 
 [private]
 build-release version:
-    GOOS="linux" GOARCH="amd64"  go build -o dist/declix
-    zip dist/declix-{{version}}-linux-amd64.zip dist/declix
+    GOOS="linux" GOARCH="amd64"  go build -o dist/declix-{{version}}-linux-amd64
+    zip dist/declix-{{version}}-linux-amd64.zip dist/declix-{{version}}-linux-amd64 -j declix -m
 
 [private]
 gen-pkl version:
