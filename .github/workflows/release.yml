@@ -1,17 +1,16 @@
-name: Go
+name: Release
 
 on:
   push:
     branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+    tags: ["*"]
 
 jobs:
   build:
     runs-on: ubuntu-24.04
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
 
     - name: Install dependecies
       run: |
@@ -20,13 +19,12 @@ jobs:
         sudo apt install --no-install-recommends --no-upgrade -y just
 
     - name: Set up Go
-      uses: actions/setup-go@v5
+      uses: actions/setup-go@v4
       with:
         go-version: '1.22'
-
-    - name: Build
-      run: go build -v ./...
 
     - name: Test
       run: go test -v ./...
 
+    - name: Build Release Artifacts
+      run: just release $(git describe --tags)
