@@ -79,9 +79,16 @@ install-go-releaser:
     go install github.com/goreleaser/goreleaser/v2@latest
 
 [private]
-build-release version:
-    GOOS="linux" GOARCH="amd64"  go build -o dist/declix-{{version}}-linux-amd64
-    zip dist/declix-{{version}}-linux-amd64.zip dist/declix-{{version}}-linux-amd64 -j declix -m
+build-release VERSION: (build-archive VERSION "linux" "amd64") (build-archive VERSION "linux" "arm64")
+
+[private]
+build-archive VERSION OS ARCH:
+    GOOS={{OS}} GOARCH={{ARCH}} go build -o dist/declix-{{VERSION}}-{{OS}}-{{ARCH}}
+    tar \
+        -cvzf dist/declix-{{VERSION}}-{{OS}}-{{ARCH}}.tgz \
+        --transform "s/declix-{{VERSION}}-{{OS}}-{{ARCH}}/declix/" \
+        -C dist declix-{{VERSION}}-{{OS}}-{{ARCH}}
+    rm dist/declix-{{VERSION}}-{{OS}}-{{ARCH}}
 
 [private]
 gen-pkl version:
