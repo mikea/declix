@@ -2,7 +2,7 @@
     "name": "declix",
     "packageUri": "package://declix.org/pkl@VERSION",
     "version": "VERSION",
-    "packageZipUrl": "https://github.com/mikea/declix/releases/download/declix@VERSION/pkl@VERSION.zip",
+    "packageZipUrl": "https://github.com/mikea/declix/releases/download/VERSION/pkl@VERSION.zip",
     "packageZipChecksums": {
         "sha256": "SHA256"
     },
