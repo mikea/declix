@@ -40,6 +40,16 @@ dist:
 clean:
     rm -rf dist
 
+cut-release VERSION:
+    # check clean tree
+    git diff --exit-code
+    git diff --cached --exit-code
+
+    git tag {{VERSION}}
+    git push origin
+    git push origin {{VERSION}}
+
+
 [private]
 install-pkl:
     mkdir -p bin
