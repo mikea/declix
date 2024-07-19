@@ -37,3 +37,11 @@ jobs:
       with:
         name: declix-artifacts.zip
         path: dist/*
+
+    - name: Check if HEAD is Tagged
+      run: |
+          if git describe --tags --exact-match >/dev/null 2>&1; then
+            echo "HEAD is tagged"
+          else
+            echo "HEAD is not tagged"
+          fi
