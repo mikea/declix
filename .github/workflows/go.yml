@@ -7,14 +7,11 @@ on:
     branches: [ "master" ]
 
 jobs:
-
   build:
     runs-on: ubuntu-24.04
 
     steps:
     - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
 
     - name: Install dependecies
       run: |
@@ -33,5 +30,3 @@ jobs:
     - name: Test
       run: go test -v ./...
 
-    - name: Release
-      run: just release $(git describe --tags)
