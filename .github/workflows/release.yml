@@ -40,7 +40,9 @@ jobs:
 
     - name: Check if HEAD is Tagged
       run: |
-          if git describe --tags --exact-match >/dev/null 2>&1; then
+          tag=$(git describe --tags --exact-match 2>/dev/null)
+          echo $tag
+          if [ -n "$tag" ]; then
             echo "HEAD is tagged"
           else
             echo "HEAD is not tagged"
