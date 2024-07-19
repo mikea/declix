@@ -87,7 +87,7 @@ build-release version:
 gen-pkl version:
     #!/usr/bin/env bash
     set -euxo pipefail
-    find . -type f -name "*.pkl" -print0 | zip dist/pkl@{{version}}.zip -@
+    find . -type f -name "*.pkl"| zip dist/pkl@{{version}}.zip -@
     cp pkl.json.tpl dist/pkl@{{version}}.json
     sed -i "s/VERSION/{{version}}/g" dist/pkl@{{version}}.json
     read -r SHA256 _ < <(sha256sum dist/pkl@{{version}}.zip) 
