@@ -28,3 +28,9 @@ jobs:
 
     - name: Build Release Artifacts
       run: just release $(git describe --tags)
+
+    - name: Archive Release Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: dist
+        path: dist
