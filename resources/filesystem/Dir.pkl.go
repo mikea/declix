@@ -9,6 +9,8 @@ type Dir interface {
 	GetState() any
 
 	GetId() string
+
+	GetDetermineStateCmd() string
 }
 
 var _ Dir = (*DirImpl)(nil)
@@ -19,6 +21,8 @@ type DirImpl struct {
 	State any `pkl:"state"`
 
 	Id string `pkl:"id"`
+
+	DetermineStateCmd string `pkl:"determineStateCmd"`
 
 	Path string `pkl:"path"`
 }
@@ -33,6 +37,10 @@ func (rcv *DirImpl) GetState() any {
 
 func (rcv *DirImpl) GetId() string {
 	return rcv.Id
+}
+
+func (rcv *DirImpl) GetDetermineStateCmd() string {
+	return rcv.DetermineStateCmd
 }
 
 func (rcv *DirImpl) GetPath() string {

@@ -94,8 +94,8 @@ func (f *FileImpl) DetermineAction(s interfaces.State, es interfaces.State) (int
 	expected := es.(state)
 	current := s.(state)
 
-	if expected.Exists {
-		if current.Exists {
+	if expected.Present {
+		if current.Present {
 			if current.Sha256 != expected.Sha256 ||
 				current.Owner != expected.Owner ||
 				current.Group != expected.Group ||
@@ -109,7 +109,7 @@ func (f *FileImpl) DetermineAction(s interfaces.State, es interfaces.State) (int
 		return ToCreate, nil
 	}
 
-	if !current.Exists {
+	if !current.Present {
 		return nil, nil
 	}
 
@@ -118,7 +118,7 @@ func (f *FileImpl) DetermineAction(s interfaces.State, es interfaces.State) (int
 
 // todo: use pkl instead
 type state struct {
-	Exists      bool
+	Present     bool
 	Sha256      string
 	Owner       string
 	Group       string
@@ -127,7 +127,7 @@ type state struct {
 
 // StyledString implements interfaces.ResouceStatus.
 func (s state) StyledString(resource interfaces.Resource) string {
-	if !s.Exists {
+	if !s.Present {
 		return pterm.FgRed.Sprint("missing")
 	} else {
 		return pterm.FgGreen.Sprint(s.Sha256[:8], " ", s.Owner, ":", s.Group, " ", s.Permissions)
@@ -172,7 +172,7 @@ func (f *FileImpl) ExpectedState() (interfaces.State, error) {
 	switch s := f.State.(type) {
 	case *resources.Missing:
 		return state{
-			Exists: false,
+			Present: false,
 		}, nil
 	case *FilePresentImpl:
 		sha256, err := content.Sha256(f.State.(*FilePresentImpl).Content)
@@ -181,7 +181,7 @@ func (f *FileImpl) ExpectedState() (interfaces.State, error) {
 		}
 
 		return state{
-			Exists:      true,
+			Present:     true,
 			Sha256:      sha256,
 			Owner:       s.Owner,
 			Group:       s.Group,

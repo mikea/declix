@@ -19,16 +19,7 @@ type groupStateOutput struct {
 }
 
 func (d *DirImpl) DetermineState(executor interfaces.CommandExecutor) (interfaces.State, error) {
-	out, err := executor.Run(fmt.Sprintf(`
-		path="%s"
-		if sudo test -d "$path"; then 
-			echo "present: true" &&
-			sudo stat --printf="owner: %%U\ngroup: %%G\npermissions: %%a\n" "$path"
-		else 
-			echo "present: false"; 
-		fi`,
-		d.Path,
-	))
+	out, err := executor.Run(d.DetermineStateCmd)
 	if err != nil {
 		return nil, err
 	}

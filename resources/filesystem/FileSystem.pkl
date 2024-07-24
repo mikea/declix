@@ -25,12 +25,12 @@ open class File extends Node  {
     fixed determineStateCmd: String = """
         path="\(path)"
         if sudo test -f "$path"; then 
-            echo "exists: true" &&
+            echo "present: true" &&
             read -r hash _ < <(sudo sha256sum "$path") &&
             echo "sha256: $hash" &&
             sudo stat --printf="size: %s\\nowner: %U\\ngroup: %G\\npermissions: %a\\n" "$path"
         else 
-            echo "exists: false"; 
+            echo "present: false"; 
         fi
         """
 }
@@ -44,6 +44,15 @@ class Dir extends Node  {
     state: Missing | DirPresent
 
     fixed id: String = type + ":" + path
+    fixed determineStateCmd: String = """
+        path="\(path)"
+        if sudo test -d "$path"; then 
+            echo "present: true" &&
+            sudo stat --printf="owner: %U\\ngroup: %G\\npermissions: %a\\n" "$path"
+        else 
+            echo "present: false"; 
+        fi
+        """
 }
 
 class DirPresent extends NodePresent {
