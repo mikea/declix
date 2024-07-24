@@ -1,5 +1,5 @@
 @go.Package { name = "mikea/declix/resources/apt" }
-module mikea.declix.resources.apt
+abstract module mikea.declix.resources.apt
 
 import "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.7.0#/go.pkl" 
 import "../Resources.pkl"
@@ -10,6 +10,8 @@ class Package extends Resources.Resource {
     name: String
     state: Dpkg.State
     updateBeforeInstall: Boolean = false
+
+    fixed id: String = type + ":" + name
 }
 
 function install(names: Listing<String>): Listing<Resources.Resource> = new Listing {

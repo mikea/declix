@@ -16,6 +16,8 @@ type Package interface {
 	GetState() state.State
 
 	GetContent() any
+
+	GetId() string
 }
 
 var _ Package = (*PackageImpl)(nil)
@@ -28,6 +30,8 @@ type PackageImpl struct {
 	State state.State `pkl:"state"`
 
 	Content any `pkl:"content"`
+
+	Id string `pkl:"id"`
 }
 
 func (rcv *PackageImpl) GetType() string {
@@ -44,4 +48,8 @@ func (rcv *PackageImpl) GetState() state.State {
 
 func (rcv *PackageImpl) GetContent() any {
 	return rcv.Content
+}
+
+func (rcv *PackageImpl) GetId() string {
+	return rcv.Id
 }

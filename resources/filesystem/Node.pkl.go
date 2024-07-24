@@ -1,5 +1,10 @@
 // Code generated from Pkl module `mikea.declix.resources.FileSystem`. DO NOT EDIT.
 package filesystem
 
-type Missing struct {
+import "mikea/declix/resources"
+
+type Node interface {
+	resources.Resource
+
+	GetPath() string
 }

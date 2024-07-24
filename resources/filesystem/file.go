@@ -1,7 +1,6 @@
 package filesystem
 
 import (
-	"crypto/sha256"
 	"fmt"
 	"io"
 	"mikea/declix/content"
@@ -13,12 +12,12 @@ import (
 )
 
 // RunAction implements interfaces.Resource.
-func (f FileImpl) RunAction(executor interfaces.CommandExcutor, a interfaces.Action, s interfaces.State, es interfaces.State) error {
+func (f *FileImpl) RunAction(executor interfaces.CommandExecutor, a interfaces.Action, s interfaces.State, es interfaces.State) error {
 	expected := es.(state)
 
 	action := a.(action)
 	switch action {
-	case ToUpload:
+	case ToCreate:
 		return f.upload(executor, expected)
 	case ToDelete:
 		_, err := executor.Run(fmt.Sprintf("sudo rm -f %s", f.Path))
@@ -33,19 +32,22 @@ func (f FileImpl) RunAction(executor interfaces.CommandExcutor, a interfaces.Act
 	}
 }
 
-func (f FileImpl) update(executor interfaces.CommandExcutor, status state, expectedStatus state) error {
-	if status.Group != expectedStatus.Group {
-		if err := f.chgrp(executor, expectedStatus); err != nil {
+func (f *FileImpl) update(executor interfaces.CommandExecutor, current state, expected state) error {
+	if current.Sha256 != expected.Sha256 {
+		return f.upload(executor, expected)
+	}
+	if current.Group != expected.Group {
+		if err := chgrp(executor, f.Path, expected.Group); err != nil {
 			return err
 		}
 	}
-	if status.Owner != expectedStatus.Owner {
-		if err := f.chown(executor, expectedStatus); err != nil {
+	if current.Owner != expected.Owner {
+		if err := chown(executor, f.Path, expected.Owner); err != nil {
 			return err
 		}
 	}
-	if status.Permissions != expectedStatus.Permissions {
-		if err := f.chmod(executor, expectedStatus); err != nil {
+	if current.Permissions != expected.Permissions {
+		if err := chmod(executor, f.Path, expected.Permissions); err != nil {
 			return err
 		}
 	}
@@ -53,35 +55,11 @@ func (f FileImpl) update(executor interfaces.CommandExcutor, status state, expec
 	return nil
 }
 
-func (f FileImpl) chmod(executor interfaces.CommandExcutor, expectedStatus state) error {
-	_, err := executor.Run(fmt.Sprintf("sudo -S chmod %s %s", expectedStatus.Permissions, f.Path))
-	if err != nil {
-		return fmt.Errorf("error changing permissions: %w", err)
-	}
-	return nil
+func (f *FileImpl) openContent() (io.ReadCloser, int64, error) {
+	return content.Open(f.State.(*FilePresentImpl).Content)
 }
 
-func (f FileImpl) chown(executor interfaces.CommandExcutor, expectedStatus state) error {
-	_, err := executor.Run(fmt.Sprintf("sudo -S chown %s %s", expectedStatus.Owner, f.Path))
-	if err != nil {
-		return fmt.Errorf("error changing permissions: %w", err)
-	}
-	return nil
-}
-
-func (f FileImpl) chgrp(executor interfaces.CommandExcutor, expectedStatus state) error {
-	_, err := executor.Run(fmt.Sprintf("sudo -S chgrp %s %s", expectedStatus.Group, f.Path))
-	if err != nil {
-		return fmt.Errorf("error changing permissions: %w", err)
-	}
-	return nil
-}
-
-func (f FileImpl) openContent() (io.ReadCloser, int64, error) {
-	return content.OpenContent(f.State.(*Present).Content)
-}
-
-func (f FileImpl) upload(executor interfaces.CommandExcutor, expectedStatus state) error {
+func (f *FileImpl) upload(executor interfaces.CommandExecutor, expected state) error {
 	content, size, err := f.openContent()
 	if err != nil {
 		return err
@@ -98,13 +76,13 @@ func (f FileImpl) upload(executor interfaces.CommandExcutor, expectedStatus stat
 		return fmt.Errorf("error copying file: %w", err)
 	}
 
-	if err := f.chown(executor, expectedStatus); err != nil {
+	if err := chown(executor, f.Path, expected.Owner); err != nil {
 		return err
 	}
-	if err := f.chgrp(executor, expectedStatus); err != nil {
+	if err := chgrp(executor, f.Path, expected.Group); err != nil {
 		return err
 	}
-	if err := f.chmod(executor, expectedStatus); err != nil {
+	if err := chmod(executor, f.Path, expected.Permissions); err != nil {
 		return err
 	}
 
@@ -112,33 +90,35 @@ func (f FileImpl) upload(executor interfaces.CommandExcutor, expectedStatus stat
 }
 
 // DetermineAction implements interfaces.Resource.
-func (f FileImpl) DetermineAction(executor interfaces.CommandExcutor, s interfaces.State, es interfaces.State) (interfaces.Action, error) {
+func (f *FileImpl) DetermineAction(s interfaces.State, es interfaces.State) (interfaces.Action, error) {
 	expected := es.(state)
-	state := s.(state)
+	current := s.(state)
 
 	if expected.Exists {
-		if state.Exists {
-			if state.Sha256 != expected.Sha256 {
-				return ToUpload, nil
-			}
-			if state.Owner != expected.Owner ||
-				state.Group != expected.Group ||
-				state.Permissions != expected.Permissions {
+		if current.Exists {
+			if current.Sha256 != expected.Sha256 ||
+				current.Owner != expected.Owner ||
+				current.Group != expected.Group ||
+				current.Permissions != expected.Permissions {
 				return ToUpdate, nil
 			}
 
 			return nil, nil
 		}
 
-		return ToUpload, nil
+		return ToCreate, nil
+	}
+
+	if !current.Exists {
+		return nil, nil
 	}
 
 	return ToDelete, nil
 }
 
+// todo: use pkl instead
 type state struct {
 	Exists      bool
-	Size        int64
 	Sha256      string
 	Owner       string
 	Group       string
@@ -159,37 +139,25 @@ type action int
 // StyledString implements interfaces.Action.
 func (a action) StyledString(resource interfaces.Resource) string {
 	switch a {
-	case ToUpload:
-		return pterm.FgGreen.Sprint("+", resource.Id())
+	case ToCreate:
+		return pterm.FgGreen.Sprint("+", resource.GetId())
 	case ToUpdate:
-		return pterm.FgYellow.Sprint("~", resource.Id())
+		return pterm.FgYellow.Sprint("~", resource.GetId())
 	case ToDelete:
-		return pterm.FgRed.Sprint("-", resource.Id())
+		return pterm.FgRed.Sprint("-", resource.GetId())
 	}
 	panic(fmt.Sprintf("unexpected apt_package.action: %#v", a))
 }
 
 const (
-	ToUpload action = iota
+	ToCreate action = iota
 	ToUpdate
 	ToDelete
 )
 
 // DetermineState implements interfaces.Resource.
-func (f FileImpl) DetermineState(executor interfaces.CommandExcutor) (interfaces.State, error) {
-	out, err := executor.Run(fmt.Sprintf(
-		`if [ ! -f "%s" ]; then 
-			echo "exists: false"; 
-		else 
-			echo "exists: true" &&
-			read -r hash _ < <(sudo sha256sum %s) &&
-			echo "sha256: $hash" &&
-			stat --printf="size: %%s\nowner: %%U\ngroup: %%G\npermissions: %%a\n" %s
-		fi`,
-		f.Path,
-		f.Path,
-		f.Path,
-	))
+func (f *FileImpl) DetermineState(executor interfaces.CommandExecutor) (interfaces.State, error) {
+	out, err := executor.Run(f.DetermineStateCmd)
 	if err != nil {
 		return nil, err
 	}
@@ -200,38 +168,20 @@ func (f FileImpl) DetermineState(executor interfaces.CommandExcutor) (interfaces
 	return state, nil
 }
 
-// Id implements interfaces.Resource.
-func (f FileImpl) Id() string {
-	return fmt.Sprintf("%s:%s", f.Type, f.Path)
-}
-
-// Pkl implements interfaces.Resource.
-func (f FileImpl) Pkl() resources.Resource {
-	return f
-}
-
-func (f FileImpl) ExpectedState() (interfaces.State, error) {
+func (f *FileImpl) ExpectedState() (interfaces.State, error) {
 	switch s := f.State.(type) {
-	case *Missing:
+	case *resources.Missing:
 		return state{
 			Exists: false,
 		}, nil
-	case *Present:
-		content, size, err := f.openContent()
+	case *FilePresentImpl:
+		sha256, err := content.Sha256(f.State.(*FilePresentImpl).Content)
 		if err != nil {
 			return nil, err
 		}
-		defer content.Close()
-
-		hasher := sha256.New()
-		if _, err := io.Copy(hasher, content); err != nil {
-			return nil, err
-		}
-		sha256 := fmt.Sprintf("%x", string(hasher.Sum(nil)))
 
 		return state{
 			Exists:      true,
-			Size:        size,
 			Sha256:      sha256,
 			Owner:       s.Owner,
 			Group:       s.Group,

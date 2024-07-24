@@ -4,6 +4,5 @@ package apt
 import "github.com/apple/pkl-go/pkl"
 
 func init() {
-	pkl.RegisterMapping("mikea.declix.resources.apt", Apt{})
 	pkl.RegisterMapping("mikea.declix.resources.apt#Package", PackageImpl{})
 }

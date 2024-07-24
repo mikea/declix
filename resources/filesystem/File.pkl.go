@@ -1,16 +1,16 @@
 // Code generated from Pkl module `mikea.declix.resources.FileSystem`. DO NOT EDIT.
 package filesystem
 
-import "mikea/declix/resources"
-
 type File interface {
-	resources.Resource
+	Node
 
 	GetType() string
 
-	GetPath() string
-
 	GetState() any
+
+	GetId() string
+
+	GetDetermineStateCmd() string
 }
 
 var _ File = (*FileImpl)(nil)
@@ -18,19 +18,31 @@ var _ File = (*FileImpl)(nil)
 type FileImpl struct {
 	Type string `pkl:"type"`
 
-	Path string `pkl:"path"`
-
 	State any `pkl:"state"`
+
+	Id string `pkl:"id"`
+
+	DetermineStateCmd string `pkl:"determineStateCmd"`
+
+	Path string `pkl:"path"`
 }
 
 func (rcv *FileImpl) GetType() string {
 	return rcv.Type
 }
 
-func (rcv *FileImpl) GetPath() string {
-	return rcv.Path
-}
-
 func (rcv *FileImpl) GetState() any {
 	return rcv.State
+}
+
+func (rcv *FileImpl) GetId() string {
+	return rcv.Id
+}
+
+func (rcv *FileImpl) GetDetermineStateCmd() string {
+	return rcv.DetermineStateCmd
+}
+
+func (rcv *FileImpl) GetPath() string {
+	return rcv.Path
 }

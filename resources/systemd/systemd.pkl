@@ -1,0 +1,17 @@
+@go.Package { name = "mikea/declix/resources/systemd" }
+abstract module mikea.declix.resources.systemd
+
+import "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.7.0#/go.pkl" 
+import ".../Resources.pkl"
+import ".../filesystem/FileSystem.pkl"
+
+class UnitFile extends FileSystem.File {
+    afterAction: AfterAction
+}
+
+class AfterAction {
+    daemonReload: Boolean = true
+    restart: String?
+    reload: String?
+    reloadOrRestart: String?
+}

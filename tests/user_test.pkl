@@ -1,0 +1,29 @@
+amends ".../resources/Resources.pkl"
+
+import ".../resources/users/Users.pkl"
+
+resources { 
+    new Users.User {
+        login = "new_user"
+        state = new Users.UserPresent {
+            uid = 999
+            group = "users"
+            groups = new Listing<String> { "users" "sudo" }
+        }
+    }
+    
+    new Users.User {
+        login = "test_user"
+        state = new Users.UserMissing { }
+    }
+
+    new Users.User {
+        login = "test_user2"
+        state = new Users.UserPresent {
+            uid = 2000
+            group = "users"
+            groups = new Listing<String> { "users" "sudo" }
+        }
+    }
+}
+

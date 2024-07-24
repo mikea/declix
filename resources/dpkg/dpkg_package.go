@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"mikea/declix/content"
 	"mikea/declix/interfaces"
-	"mikea/declix/resources"
 	"mikea/declix/resources/dpkg/state"
 
 	"github.com/pterm/pterm"
@@ -28,15 +27,15 @@ const (
 func (a Action) StyledString(resource interfaces.Resource) string {
 	switch a {
 	case ToInstall:
-		return pterm.FgGreen.Sprint("+", resource.Id())
+		return pterm.FgGreen.Sprint("+", resource.GetId())
 	case ToRemove:
-		return pterm.FgRed.Sprint("-", resource.Id())
+		return pterm.FgRed.Sprint("-", resource.GetId())
 	}
 	panic(fmt.Sprintf("unexpected apt_package.action: %#v", a))
 }
 
 // DetermineAction implements interfaces.Resource.
-func (p PackageImpl) DetermineAction(executor interfaces.CommandExcutor, s interfaces.State, es interfaces.State) (interfaces.Action, error) {
+func (p PackageImpl) DetermineAction(s interfaces.State, es interfaces.State) (interfaces.Action, error) {
 	state := s.(State)
 	expectedState := es.(State)
 
@@ -58,7 +57,7 @@ func DetermineAction(state State, expectedState State) (interfaces.Action, error
 }
 
 // DetermineState implements interfaces.Resource.
-func (p PackageImpl) DetermineState(executor interfaces.CommandExcutor) (interfaces.State, error) {
+func (p PackageImpl) DetermineState(executor interfaces.CommandExecutor) (interfaces.State, error) {
 	return DeterminePackageState(executor, p.GetName())
 }
 
@@ -70,21 +69,11 @@ func (p PackageImpl) ExpectedState() (interfaces.State, error) {
 	}, nil
 }
 
-// Id implements interfaces.Resource.
-func (p PackageImpl) Id() string {
-	return fmt.Sprintf("%s:%s", p.Type, p.GetName())
-}
-
-// Pkl implements interfaces.Resource.
-func (p PackageImpl) Pkl() resources.Resource {
-	panic("unimplemented")
-}
-
 // RunAction implements interfaces.Resource.
-func (p PackageImpl) RunAction(executor interfaces.CommandExcutor, action interfaces.Action, s interfaces.State, es interfaces.State) error {
+func (p PackageImpl) RunAction(executor interfaces.CommandExecutor, action interfaces.Action, s interfaces.State, es interfaces.State) error {
 	switch action.(Action) {
 	case ToInstall:
-		io, size, err := content.OpenContent(p.Content)
+		io, size, err := content.Open(p.Content)
 		if err != nil {
 			return err
 		}
@@ -118,7 +107,7 @@ type stateOutput struct {
 	Version string
 }
 
-func DeterminePackageState(executor interfaces.CommandExcutor, name string) (interfaces.State, error) {
+func DeterminePackageState(executor interfaces.CommandExecutor, name string) (interfaces.State, error) {
 	cmdOut, err := executor.Run(fmt.Sprintf(
 		"dpkg-query -W -f='abbrev: ${db:Status-Abbrev}\nversion: ${Version}\n' %s || { [[ $? -eq 1 ]] && echo 'abbrev: uu'; }",
 		name))

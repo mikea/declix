@@ -1,0 +1,8 @@
+amends "../target/Target.pkl"
+
+target = new SshConfig {
+    user = "declix"
+    address = "localhost:2222"
+    privateKey = "id_rsa"
+}
+

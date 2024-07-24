@@ -3,4 +3,6 @@ package content
 
 type File struct {
 	File string `pkl:"file"`
+
+	Sha256 *string `pkl:"sha256"`
 }

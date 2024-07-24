@@ -3,13 +3,12 @@ package apt
 import (
 	"fmt"
 	"mikea/declix/interfaces"
-	"mikea/declix/resources"
 	"mikea/declix/resources/dpkg"
 	"mikea/declix/resources/dpkg/state"
 )
 
 // RunAction implements interfaces.Resource.
-func (p PackageImpl) RunAction(executor interfaces.CommandExcutor, a interfaces.Action, s interfaces.State, es interfaces.State) error {
+func (p PackageImpl) RunAction(executor interfaces.CommandExecutor, a interfaces.Action, s interfaces.State, es interfaces.State) error {
 	switch a.(dpkg.Action) {
 	case dpkg.ToInstall:
 		cmd := fmt.Sprintf("sudo -S apt-get install -y --no-upgrade --no-install-recommends %s", p.Name)
@@ -26,7 +25,7 @@ func (p PackageImpl) RunAction(executor interfaces.CommandExcutor, a interfaces.
 }
 
 // DetermineAction implements interfaces.Resource.
-func (p PackageImpl) DetermineAction(executor interfaces.CommandExcutor, s interfaces.State, es interfaces.State) (interfaces.Action, error) {
+func (p PackageImpl) DetermineAction(s interfaces.State, es interfaces.State) (interfaces.Action, error) {
 	return dpkg.DetermineAction(s.(dpkg.State), es.(dpkg.State))
 }
 
@@ -39,17 +38,7 @@ func (p PackageImpl) ExpectedState() (interfaces.State, error) {
 }
 
 // DetermineState implements impl.Resource.
-func (p PackageImpl) DetermineState(executor interfaces.CommandExcutor) (interfaces.State, error) {
+func (p PackageImpl) DetermineState(executor interfaces.CommandExecutor) (interfaces.State, error) {
 	name := p.Name
 	return dpkg.DeterminePackageState(executor, name)
-}
-
-// Id implements impl.Resource.
-func (p PackageImpl) Id() string {
-	return fmt.Sprintf("%s:%s", p.Type, p.Name)
-}
-
-// Pkl implements impl.Resource.
-func (p PackageImpl) Pkl() resources.Resource {
-	return p
 }

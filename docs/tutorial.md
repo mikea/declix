@@ -125,7 +125,6 @@ From here we can check the state of the target system:
 ```
 $ go run main.go state -t local/declix-target.pkl -r local/declix.pkl
 Target: &{declix:22 mike /home/mike/.ssh/id_ed25519}
-Checking...
 Resource Id        | Current State     | Expected State                                                               
 -------------------------------------------------------
 apt:tmux           | missing           | installed
@@ -250,7 +249,6 @@ Let's check the state:
 
 ```
 Target: &{hamd:22 mike /home/mike/.ssh/id_ed25519}
-Checking...
 Resource Id                                  | Current State     | Expected State                                     
 -----------------------------------------------------------------------------------------
 apt:tmux                                     | 3.3a-3            | installed
@@ -282,7 +280,6 @@ displays only what needs to be done:
 And apply:
 
 ```
-Checking...
 Applying...                                                                                                           
 ✓ +file:/etc/apt/trusted.gpg.d/zerotier.com.gpg                                                                       
 ✓ +file:/etc/apt/sources.list.d/zerotier.list                                                                         
@@ -294,6 +291,5 @@ up-to-date:
 
 ```
 Target:  declpi:22
-Checking...
 No actions necessary                                                                                                        
 ```

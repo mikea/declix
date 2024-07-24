@@ -1,14 +1,26 @@
 @go.Package { name = "mikea/declix/content" }
-module mikea.declix.Content
+abstract module mikea.declix.Content
 
 import "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.7.0#/go.pkl" 
 
-typealias Content = String | File | Url;
+typealias Content = String | File | Url | Base64;
 
 class File {
     file: String
+    sha256: String?
 }
 
 class Url {
     url: String
+    sha256: String?
+}
+
+class Base64 {
+    base64: String
+    sha256: String?
+}
+
+function Resource(r: Resource): Base64 = new Base64 {
+    base64 = r.base64
+    sha256 = r.sha256
 }

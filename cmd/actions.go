@@ -4,12 +4,8 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"mikea/declix/impl"
-	"mikea/declix/interfaces"
-	"mikea/declix/resources"
-	"mikea/declix/target"
 
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -24,54 +20,32 @@ var actionsCmd = &cobra.Command{
 	Long: `Determine and list all actions to perform to bring the system
 th the desired state.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		targetPkl, err := target.LoadFromPath(context.Background(), targetFile)
-		if err != nil {
+		app := impl.App{}
+
+		if err := app.LoadTarget(targetFile); err != nil {
 			return err
 		}
-		target := targetPkl.Target
-		pterm.Println("Target: ", target.Address)
-
-		resourcesPkl, err := resources.LoadFromPath(context.Background(), resourcesFile)
-		if err != nil {
+		if err := app.LoadResources(resourcesFile); err != nil {
 			return err
 		}
-
-		resources := impl.CreateResources(resourcesPkl.Resources)
-
-		progress, err := pterm.DefaultProgressbar.WithTotal(len(resources)).WithRemoveWhenDone(true).Start()
-		if err != nil {
+		if err := app.DetermineStates(); err != nil {
+			return err
+		}
+		if err := app.DetermineActions(); err != nil {
 			return err
 		}
 
-		progress.UpdateTitle("Connecting...")
-		executor, err := impl.SshExecutor(*target)
-		if err != nil {
-			return err
-		}
-		defer executor.Close()
-
-		pterm.FgGray.Println("Checking...")
-		states, expectedStates, errors := impl.DetermineStates(resources, executor, *progress)
-		progress.Stop()
-
-		actions := make([]interfaces.Action, len(resources))
-		for i, res := range resources {
-			if errors[i] == nil {
-				actions[i], errors[i] = res.DetermineAction(executor, states[i], expectedStates[i])
-			}
-		}
-
-		for i, action := range actions {
-			if errors[i] != nil {
-				pterm.Println(pterm.BgRed.Sprint(resources[i].Id()), errors[i])
+		for i, action := range app.Actions {
+			if app.Errors[i] != nil {
+				pterm.Println(pterm.BgRed.Sprint(app.Resources[i].GetId()), app.Errors[i])
 			} else if action != nil {
-				pterm.Println(action.StyledString(resources[i]))
+				pterm.Println(action.StyledString(app.Resources[i]))
 			}
 		}
 
-		for _, err := range errors {
+		for _, err := range app.Errors {
 			if err != nil {
-				return fmt.Errorf("there were errors applying actions")
+				return fmt.Errorf("there were errors determining actions")
 			}
 		}
 

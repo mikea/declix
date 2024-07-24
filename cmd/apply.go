@@ -4,13 +4,9 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"context"
+	"fmt"
 	"mikea/declix/impl"
-	"mikea/declix/interfaces"
-	"mikea/declix/resources"
-	"mikea/declix/target"
 
-	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
@@ -21,69 +17,27 @@ var applyCmd = &cobra.Command{
 	Short:   "Apply all actions",
 	Long:    `Apply all necessary actions to bring system to desired state.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		targetPkl, err := target.LoadFromPath(context.Background(), targetFile)
-		if err != nil {
+		app := impl.App{}
+
+		if err := app.LoadTarget(targetFile); err != nil {
 			return err
 		}
-		target := targetPkl.Target
-		pterm.Println("Target: ", target.Address)
-
-		resourcesPkl, err := resources.LoadFromPath(context.Background(), resourcesFile)
-		if err != nil {
+		if err := app.LoadResources(resourcesFile); err != nil {
 			return err
 		}
-
-		resources := impl.CreateResources(resourcesPkl.Resources)
-
-		pterm.FgGray.Println("Checking...")
-		progress, err := pterm.DefaultProgressbar.WithTotal(len(resources)).WithRemoveWhenDone(true).Start()
-		if err != nil {
+		if err := app.DetermineStates(); err != nil {
 			return err
 		}
-
-		progress.UpdateTitle("Connecting...")
-		executor, err := impl.SshExecutor(*target)
-		if err != nil {
+		if err := app.DetermineActions(); err != nil {
 			return err
 		}
-		defer executor.Close()
-
-		states, expectedStates, errors := impl.DetermineStates(resources, executor, *progress)
-		progress.Stop()
-
-		actions := make([]interfaces.Action, len(resources))
-		totalActions := 0
-		for i, res := range resources {
-			if errors[i] != nil {
-				continue
-			}
-			actions[i], errors[i] = res.DetermineAction(executor, states[i], expectedStates[i])
-			if actions[i] != nil {
-				totalActions += 1
-			}
-		}
-
-		pterm.FgGray.Println("Applying...")
-		progress, err = pterm.DefaultProgressbar.WithTotal(totalActions).WithRemoveWhenDone(true).Start()
-		if err != nil {
+		if err := app.ApplyActions(); err != nil {
 			return err
 		}
 
-		for i, action := range actions {
-			if actions[i] == nil {
-				continue
-			}
-			progress.UpdateTitle(action.StyledString(resources[i]))
-			progress.Increment()
-
-			err = resources[i].RunAction(executor, actions[i], states[i], expectedStates[i])
-			if err != nil {
-				pterm.Println(pterm.BgRed.Sprint("E ", actions[i].StyledString(resources[i])), err)
-			} else {
-				pterm.Println(pterm.FgGreen.Sprint("\u2713"), actions[i].StyledString(resources[i]))
-			}
+		if app.HasErrors() {
+			return fmt.Errorf("there were errors determining actions")
 		}
-		progress.Stop()
 
 		return nil
 	},

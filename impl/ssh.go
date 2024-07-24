@@ -19,7 +19,7 @@ type sshExecutor struct {
 	client *ssh.Client
 }
 
-// MkTemp implements interfaces.CommandExcutor.
+// MkTemp implements interfaces.CommandExecutor.
 func (executor sshExecutor) MkTemp() (string, error) {
 	tmp, err := executor.Run("mktemp")
 	if err != nil {
@@ -28,12 +28,7 @@ func (executor sshExecutor) MkTemp() (string, error) {
 	return strings.TrimSuffix(tmp, "\n"), nil
 }
 
-// UploadTempNoSize implements interfaces.CommandExcutor.
-func (executor sshExecutor) UploadTempNoSize(content io.Reader) (string, error) {
-	panic("unimplemented")
-}
-
-// UploadTemp implements interfaces.CommandExcutor.
+// UploadTemp implements interfaces.CommandExecutor.
 func (executor sshExecutor) UploadTemp(content io.Reader, size int64) (string, error) {
 	tmp, err := executor.MkTemp()
 	if err != nil {
@@ -46,7 +41,7 @@ func (executor sshExecutor) UploadTemp(content io.Reader, size int64) (string, e
 	return tmp, nil
 }
 
-// Upload implements interfaces.CommandExcutor.
+// Upload implements interfaces.CommandExecutor.
 func (s sshExecutor) Upload(content io.Reader, remotePath string, permissions string, size int64) error {
 	client, err := scp.NewClientBySSH(s.client)
 	if err != nil {
@@ -54,10 +49,36 @@ func (s sshExecutor) Upload(content io.Reader, remotePath string, permissions st
 	}
 	defer client.Close()
 
-	return client.Copy(context.Background(), content, remotePath, permissions, size)
+	if size >= 0 {
+		return client.Copy(context.Background(), content, remotePath, permissions, size)
+	} else {
+		tmp, err := os.CreateTemp("", "declix")
+		if err != nil {
+			return err
+		}
+		tmpName := tmp.Name()
+		defer os.Remove(tmpName)
+		defer tmp.Close()
+		if size, err = io.Copy(tmp, content); err != nil {
+			return err
+		}
+
+		if err = tmp.Close(); err != nil {
+			return err
+		}
+		if tmp, err = os.Open(tmpName); err != nil {
+			return err
+		}
+
+		err = client.Copy(context.Background(), tmp, remotePath, permissions, size)
+		if err != nil {
+			return err
+		}
+		return err
+	}
 }
 
-func SshExecutor(pkl target.SshConfig) (interfaces.CommandExcutor, error) {
+func SshExecutor(pkl target.SshConfig) (interfaces.CommandExecutor, error) {
 	key, err := os.ReadFile(pkl.PrivateKey)
 	if err != nil {
 		log.Fatalf("Unable to read private key: %v", err)
@@ -83,7 +104,7 @@ func SshExecutor(pkl target.SshConfig) (interfaces.CommandExcutor, error) {
 	return sshExecutor{pkl: pkl, client: client}, nil
 }
 
-// Run implements interfaces.CommandExcutor.
+// Run implements interfaces.CommandExecutor.
 func (s sshExecutor) Run(command string) (string, error) {
 	session, err := s.client.NewSession()
 	if err != nil {

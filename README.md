@@ -33,6 +33,7 @@ for a taste of declix operations.
 
 Currently supported resources:
 
+- Groups and Users
 - Files (present/missing)
 - `.deb` packages (present/missing)
 - `apt` packages (present/missing)
@@ -70,6 +71,20 @@ must be present on the target:
 
 Many of them come preinstalled on most systems, others
 could be installed using `declix` itself.
+
+#### Dedicated User
+
+It is recommended to have a separate user on the target
+for all declix operations. It can be created like:
+
+```bash
+sudo adduser --disabled-password declix
+sudo usermod -aG sudo declix
+echo "declix ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/declix
+echo "your_public_key_contents" >> /home/declix/.ssh/authorized_keys
+```
+
+
 
 ## Declix Configuration
 

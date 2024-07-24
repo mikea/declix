@@ -1,27 +1,24 @@
-import "../resources/filesystem/FileSystem.pkl" as FS
+import "../resources/filesystem/FileSystem.pkl"
 import "../resources/apt/Apt.pkl"
 import "../resources/Resources.pkl"
 import "../content/Content.pkl"
 
 url = "https://download.zerotier.com/"
-codename = "bookworm"
 
-function install(): Listing<Resources.Resource> = new Listing {
-    new FS.File {
+function install(codename: String): Listing<Resources.Resource> = new Listing {
+    new FileSystem.File {
         path = "/etc/apt/trusted.gpg.d/zerotier.com.gpg"
-        state = new FS.Present {
-            content = new Content.File {
-                file = "modules/zerotier.com.gpg"
-            }
+        state = new FileSystem.FilePresent {
+            content = Content.Resource(read("zerotier.com.gpg"))
             owner = "root"
             group = "root"
             permissions = "644"
         }
     }
 
-    new FS.File {
+    new FileSystem.File {
         path = "/etc/apt/sources.list.d/zerotier.list"
-        state = new FS.Present {
+        state = new FileSystem.FilePresent {
             owner = "root"
             group = "root"
             permissions = "644"
@@ -42,13 +39,13 @@ function remove() : Listing<Resources.Resource> = new Listing {
         state = "missing"
         updateBeforeInstall = true
     }
-    new FS.File {
+    new FileSystem.File {
         path = "/etc/apt/sources.list.d/zerotier.list"
-        state = new FS.Missing {}
+        state = new FileSystem.Missing {}
     }
-    new FS.File {
+    new FileSystem.File {
         path = "/etc/apt/trusted.gpg.d/zerotier.com.gpg"
-        state = new FS.Missing {}
+        state = new FileSystem.Missing {}
     }
 }
 

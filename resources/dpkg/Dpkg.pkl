@@ -1,5 +1,5 @@
 @go.Package { name = "mikea/declix/resources/dpkg" }
-module mikea.declix.resources.dpkg
+abstract module mikea.declix.resources.dpkg
 
 import "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.7.0#/go.pkl" 
 import "../Resources.pkl"
@@ -10,6 +10,8 @@ class Package extends Resources.Resource {
     name: String
     state: State
     content: Content.Content
+
+    fixed id: String = type + ":" + name
 }
 
 typealias State = "installed" | "missing";

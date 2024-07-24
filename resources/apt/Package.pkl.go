@@ -16,6 +16,8 @@ type Package interface {
 	GetState() state.State
 
 	GetUpdateBeforeInstall() bool
+
+	GetId() string
 }
 
 var _ Package = (*PackageImpl)(nil)
@@ -28,6 +30,8 @@ type PackageImpl struct {
 	State state.State `pkl:"state"`
 
 	UpdateBeforeInstall bool `pkl:"updateBeforeInstall"`
+
+	Id string `pkl:"id"`
 }
 
 func (rcv *PackageImpl) GetType() string {
@@ -44,4 +48,8 @@ func (rcv *PackageImpl) GetState() state.State {
 
 func (rcv *PackageImpl) GetUpdateBeforeInstall() bool {
 	return rcv.UpdateBeforeInstall
+}
+
+func (rcv *PackageImpl) GetId() string {
+	return rcv.Id
 }

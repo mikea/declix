@@ -1,26 +1,50 @@
 @go.Package { name = "mikea/declix/resources/filesystem" }
-module mikea.declix.resources.FileSystem
+abstract module mikea.declix.resources.FileSystem
 
 import "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.7.0#/go.pkl" 
-import "../Resources.pkl"
+import ".../Resources.pkl"
 import "../../content/Content.pkl"
 
+typealias Missing = Resources.Missing
 
-class File extends Resources.Resource  {
-    type: "file"
+abstract class Node extends Resources.Resource {
     path: String
-    state: State
 }
 
-typealias State = Present | Missing
-
-class Present {
-    content: Content.Content
+abstract class NodePresent {
     owner: String
     group: String
     permissions: String
 }
 
-class Missing {
+open class File extends Node  {
+    type: "file"
+    state: Missing | FilePresent
 
+    fixed id: String = type + ":" + path
+    fixed determineStateCmd: String = """
+        path="\(path)"
+        if sudo test -f "$path"; then 
+            echo "exists: true" &&
+            read -r hash _ < <(sudo sha256sum "$path") &&
+            echo "sha256: $hash" &&
+            sudo stat --printf="size: %s\\nowner: %U\\ngroup: %G\\npermissions: %a\\n" "$path"
+        else 
+            echo "exists: false"; 
+        fi
+        """
+}
+
+class FilePresent extends NodePresent {
+    content: Content.Content
+}
+
+class Dir extends Node  {
+    type: "dir"
+    state: Missing | DirPresent
+
+    fixed id: String = type + ":" + path
+}
+
+class DirPresent extends NodePresent {
 }

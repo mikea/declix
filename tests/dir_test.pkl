@@ -1,0 +1,27 @@
+amends ".../resources/Resources.pkl"
+
+import ".../resources/filesystem/FileSystem.pkl"
+
+resources { 
+    new FileSystem.Dir {
+        path = "/tmp/new_dir"
+        state = new FileSystem.DirPresent {
+            owner = "test_user"
+            group = "users"
+            permissions = "775"
+        }
+    }
+    new FileSystem.Dir {
+        path = "/var/test_dir"
+        state = new Missing { }
+    }
+    new FileSystem.Dir {
+        path = "/var/test_dir2"
+        state = new FileSystem.DirPresent {
+            owner = "test_user"
+            group = "users"
+            permissions = "777"
+        }
+    }
+}
+

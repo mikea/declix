@@ -7,3 +7,5 @@ resources: Listing<Resource>
 
 abstract class Resource { 
 }
+
+class Missing { }

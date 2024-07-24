@@ -3,4 +3,6 @@ package content
 
 type Url struct {
 	Url string `pkl:"url"`
+
+	Sha256 *string `pkl:"sha256"`
 }

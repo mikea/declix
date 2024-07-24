@@ -4,6 +4,8 @@ RESOURCES := "local/hamd.pkl"
 GOROOT := `go env GOROOT`
 GOPATH := `go env GOPATH`
 
+PKL_GEN_GO := GOPATH + "/bin/pkl-gen-go"
+
 alias w := watch
 
 watch +WATCH_TARGET='test':
@@ -25,12 +27,11 @@ actions:
 apply:
     export PATH=$(pwd)/bin:$PATH && go run main.go apply -t {{TARGET}} -r {{RESOURCES}}
 
-test:
+test: build
     go test ./...
 
 build:
-    go build main.go
-    mv main bin/declix
+    go build -o bin/declix
 
 release version: clean dist (build-release version) (gen-pkl version)
 
@@ -63,12 +64,14 @@ install-pkl-gen-go:
 [private]
 pkl-gen-go:
     find . -name "*.pkl.go" -exec rm -f {} +
-    export PATH=$(pwd)/bin:$PATH && {{GOPATH}}/bin/pkl-gen-go resources/apt/Apt.pkl --base-path mikea/declix
-    export PATH=$(pwd)/bin:$PATH && {{GOPATH}}/bin/pkl-gen-go resources/dpkg/Dpkg.pkl --base-path mikea/declix
-    export PATH=$(pwd)/bin:$PATH && {{GOPATH}}/bin/pkl-gen-go resources/filesystem/FileSystem.pkl --base-path mikea/declix
-    export PATH=$(pwd)/bin:$PATH && {{GOPATH}}/bin/pkl-gen-go content/Content.pkl --base-path mikea/declix
-    export PATH=$(pwd)/bin:$PATH && {{GOPATH}}/bin/pkl-gen-go resources/Resources.pkl --base-path mikea/declix
-    export PATH=$(pwd)/bin:$PATH && {{GOPATH}}/bin/pkl-gen-go target/Target.pkl --base-path mikea/declix
+    export PATH=$(pwd)/bin:$PATH && {{PKL_GEN_GO}} resources/apt/Apt.pkl --base-path mikea/declix
+    export PATH=$(pwd)/bin:$PATH && {{PKL_GEN_GO}} resources/dpkg/Dpkg.pkl --base-path mikea/declix
+    export PATH=$(pwd)/bin:$PATH && {{PKL_GEN_GO}} resources/users/Users.pkl --base-path mikea/declix
+    export PATH=$(pwd)/bin:$PATH && {{PKL_GEN_GO}} resources/systemd/systemd.pkl --base-path mikea/declix
+    export PATH=$(pwd)/bin:$PATH && {{PKL_GEN_GO}} resources/filesystem/FileSystem.pkl --base-path mikea/declix
+    export PATH=$(pwd)/bin:$PATH && {{PKL_GEN_GO}} content/Content.pkl --base-path mikea/declix
+    export PATH=$(pwd)/bin:$PATH && {{PKL_GEN_GO}} resources/Resources.pkl --base-path mikea/declix
+    export PATH=$(pwd)/bin:$PATH && {{PKL_GEN_GO}} target/Target.pkl --base-path mikea/declix
 
 [private]
 install-cobra-cli:
@@ -94,7 +97,7 @@ build-archive VERSION OS ARCH:
 gen-pkl version:
     #!/usr/bin/env bash
     set -euxo pipefail
-    find . -type f -name "*.pkl"| zip dist/pkl@{{version}}.zip -@
+    find . -type f -name "*.pkl" -not -path "*/tests/*" | zip dist/pkl@{{version}}.zip -@
     cp pkl.json.tpl dist/pkl@{{version}}.json
     sed -i "s/VERSION/{{version}}/g" dist/pkl@{{version}}.json
     read -r SHA256 _ < <(sha256sum dist/pkl@{{version}}.zip) 

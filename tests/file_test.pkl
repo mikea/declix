@@ -1,0 +1,30 @@
+amends ".../resources/Resources.pkl"
+
+import ".../resources/filesystem/FileSystem.pkl"
+import ".../content/Content.pkl"
+
+resources { 
+    new FileSystem.File {
+        path = "/tmp/new_file"
+        state = new FileSystem.FilePresent {
+            owner = "test_user"
+            group = "users"
+            permissions = "775"
+            content = "test"
+        }
+    }
+    new FileSystem.File {
+        path = "/var/test_file"
+        state = new Missing { }
+    }
+    new FileSystem.File {
+        path = "/var/test_file2"
+        state = new FileSystem.FilePresent {
+            owner = "test_user"
+            group = "users"
+            permissions = "777"
+            content = Content.Resource(read("id_rsa.pub"))
+        }
+    }
+}
+

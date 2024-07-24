@@ -1,0 +1,30 @@
+FROM debian:stable
+
+RUN apt update
+RUN apt install -y ssh sudo
+
+# setup declix user
+RUN adduser --disabled-password --ingroup sudo declix \
+    && echo "declix ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/declix
+ADD id_rsa.pub /home/declix/.ssh/authorized_keys
+
+# Test resources
+
+# user_test.pkl
+RUN adduser --disabled-password test_user
+RUN adduser --disabled-password test_user2
+
+# group_test.pkl
+RUN addgroup test_group
+RUN addgroup test_group2
+
+# file_test.pkl
+RUN touch /var/test_file
+RUN echo "hello" > /var/test_file2
+
+# dir_test.pkl
+RUN mkdir /var/test_dir
+RUN mkdir /var/test_dir2
+
+RUN systemctl enable ssh
+CMD ["/sbin/init"]

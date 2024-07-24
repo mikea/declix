@@ -1,0 +1,25 @@
+amends ".../resources/Resources.pkl"
+
+import ".../resources/users/Users.pkl"
+
+resources { 
+    new Users.Group {
+        name = "new_group"
+        state = new Users.GroupPresent {
+            gid = 2005
+        }
+    }
+    
+    new Users.Group {
+        name = "test_group"
+        state = new Users.GroupMissing { }
+    }
+
+    new Users.Group {
+        name = "test_group2"
+        state = new Users.GroupPresent {
+            gid = 2000
+        }
+    }
+}
+
