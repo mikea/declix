@@ -1,17 +1,15 @@
 @go.Package { name = "mikea/declix/resources/users" }
 abstract module mikea.declix.resources.Users
 
-import "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.7.0#/go.pkl" 
+import "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.8.0#/go.pkl" 
 import ".../Resources.pkl"
 
 class User extends Resources.Resource  {
     type: "user"
     login: String
-    state: UserPresent | UserMissing
+    state: UserPresent | Resources.Missing
     fixed id: String = type + ":" + login
 }
-
-class UserMissing { }
 
 class UserPresent {
     uid: Id
@@ -22,12 +20,10 @@ class UserPresent {
 class Group extends Resources.Resource {
     type: "group"
     name: String
-    state: GroupPresent | GroupMissing
+    state: GroupPresent | Resources.Missing
 
     fixed id: String = type + ":" + name
 }
-
-class GroupMissing { }
 
 class GroupPresent {
     gid: Int

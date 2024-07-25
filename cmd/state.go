@@ -41,41 +41,33 @@ func executeState() error {
 		return err
 	}
 
-	tableData := make(pterm.TableData, len(app.States)+1)
+	tableData := make(pterm.TableData, len(app.Resources)+1)
 	tableData[0] = []string{"Resource Id", "Current State", "Expected State"}
-	for i, state := range app.States {
-		var stateStr string
+	for i, r := range app.Resources {
+		var currentStr string
 		var expectedStr string
 
-		if state != nil {
-			stateStr = state.StyledString(app.Resources[i])
+		if r.Current != nil {
+			currentStr = r.Current.GetStyledString()
 		} else {
-			stateStr = pterm.BgRed.Sprint("ERROR")
+			currentStr = pterm.BgRed.Sprint("ERROR")
 		}
-		if app.Expected[i] != nil {
-			expectedStr = app.Expected[i].StyledString(app.Resources[i])
+		if r.Expected != nil {
+			expectedStr = r.Expected.GetStyledString()
 		} else {
 			expectedStr = pterm.BgRed.Sprint("ERROR")
 		}
 
-		tableData[i+1] = []string{app.Resources[i].GetId(), stateStr, expectedStr}
+		tableData[i+1] = []string{r.Resource.GetId(), currentStr, expectedStr}
 	}
 
 	pterm.DefaultTable.WithHasHeader().WithHeaderRowSeparator("-").WithData(tableData).Render()
 
-	hasErrors := false
-	for _, err := range app.Errors {
-		if err != nil {
-			hasErrors = true
-			break
-		}
-	}
-
-	if hasErrors {
+	if app.HasErrors() {
 		pterm.Println(pterm.FgRed.Sprint("Errors:"))
-		for i, err := range app.Errors {
-			if err != nil {
-				pterm.Println(pterm.BgRed.Sprint(app.Resources[i].GetId()), pterm.FgRed.Sprint(err))
+		for _, r := range app.Resources {
+			if r.Error != nil {
+				pterm.Println(pterm.BgRed.Sprint(r.Resource.GetId()), pterm.FgRed.Sprint(r.Error))
 			}
 		}
 

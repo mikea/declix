@@ -14,7 +14,7 @@ resources {
     
     new Users.User {
         login = "test_user"
-        state = new Users.UserMissing { }
+        state = new Missing { }
     }
 
     new Users.User {

@@ -3,6 +3,7 @@ package users
 import (
 	"fmt"
 	"mikea/declix/interfaces"
+	"mikea/declix/resources"
 
 	"github.com/pterm/pterm"
 	"gopkg.in/yaml.v3"
@@ -36,7 +37,7 @@ func (g *GroupImpl) DetermineState(executor interfaces.CommandExecutor) (interfa
 	}
 
 	if !output.Present {
-		return &GroupMissing{}, nil
+		return &resources.Missing{}, nil
 	}
 
 	return &GroupPresent{
@@ -68,8 +69,8 @@ func (a groupAction) StyledString(resource interfaces.Resource) string {
 
 func (g *GroupImpl) DetermineAction(s interfaces.State, e interfaces.State) (interfaces.Action, error) {
 	switch expectedState := e.(type) {
-	case *GroupMissing:
-		if _, ok := s.(*GroupMissing); ok {
+	case *resources.Missing:
+		if _, ok := s.(*resources.Missing); ok {
 			return nil, nil
 		}
 		return groupDelete, nil
@@ -114,10 +115,6 @@ func (g *GroupImpl) RunAction(executor interfaces.CommandExecutor, a interfaces.
 	}
 }
 
-func (state *GroupPresent) StyledString(r interfaces.Resource) string {
-	return pterm.FgGreen.Sprintf("%s %d", r.(*GroupImpl).Name, state.Gid)
-}
-
-func (state *GroupMissing) StyledString(r interfaces.Resource) string {
-	return pterm.FgRed.Sprint("missing")
+func (state *GroupPresent) GetStyledString() string {
+	return pterm.FgGreen.Sprintf("%d", state.Gid)
 }

@@ -1,7 +1,7 @@
 @go.Package { name = "mikea/declix/resources/apt" }
 abstract module mikea.declix.resources.apt
 
-import "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.7.0#/go.pkl" 
+import "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.8.0#/go.pkl" 
 import "../Resources.pkl"
 import "../dpkg/Dpkg.pkl"
 

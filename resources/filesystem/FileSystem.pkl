@@ -1,7 +1,7 @@
 @go.Package { name = "mikea/declix/resources/filesystem" }
 abstract module mikea.declix.resources.FileSystem
 
-import "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.7.0#/go.pkl" 
+import "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.8.0#/go.pkl" 
 import ".../Resources.pkl"
 import "../../content/Content.pkl"
 
@@ -22,7 +22,7 @@ open class File extends Node  {
     state: Missing | FilePresent
 
     fixed id: String = type + ":" + path
-    fixed determineStateCmd: String = """
+    fixed _determineStateCmd: String = """
         path="\(path)"
         if sudo test -f "$path"; then 
             echo "present: true" &&
@@ -44,7 +44,7 @@ class Dir extends Node  {
     state: Missing | DirPresent
 
     fixed id: String = type + ":" + path
-    fixed determineStateCmd: String = """
+    fixed _determineStateCmd: String = """
         path="\(path)"
         if sudo test -d "$path"; then 
             echo "present: true" &&

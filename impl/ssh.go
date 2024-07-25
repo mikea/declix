@@ -10,17 +10,35 @@ import (
 	"os"
 	"strings"
 
+	"github.com/apple/pkl-go/pkl"
 	scp "github.com/bramvdbogaerde/go-scp"
 	"golang.org/x/crypto/ssh"
 )
 
 type sshExecutor struct {
-	pkl    target.SshConfig
-	client *ssh.Client
+	pkl       target.SshConfig
+	client    *ssh.Client
+	evaluator pkl.Evaluator
+}
+
+func (executor *sshExecutor) Execute(command string) error {
+	output, err := executor.Run(command)
+	if err != nil {
+		return fmt.Errorf("error executing command: %w\n%s", err, output)
+	}
+	return nil
+}
+
+func (executor *sshExecutor) Evaluate(command string, out any) error {
+	output, err := executor.Run(command)
+	if err != nil {
+		return fmt.Errorf("error evaluating command: %w\n%s", err, output)
+	}
+	return executor.evaluator.EvaluateModule(context.Background(), pkl.TextSource(output), out)
 }
 
 // MkTemp implements interfaces.CommandExecutor.
-func (executor sshExecutor) MkTemp() (string, error) {
+func (executor *sshExecutor) MkTemp() (string, error) {
 	tmp, err := executor.Run("mktemp")
 	if err != nil {
 		return "", err
@@ -29,7 +47,7 @@ func (executor sshExecutor) MkTemp() (string, error) {
 }
 
 // UploadTemp implements interfaces.CommandExecutor.
-func (executor sshExecutor) UploadTemp(content io.Reader, size int64) (string, error) {
+func (executor *sshExecutor) UploadTemp(content io.Reader, size int64) (string, error) {
 	tmp, err := executor.MkTemp()
 	if err != nil {
 		return "", err
@@ -78,8 +96,8 @@ func (s sshExecutor) Upload(content io.Reader, remotePath string, permissions st
 	}
 }
 
-func SshExecutor(pkl target.SshConfig) (interfaces.CommandExecutor, error) {
-	key, err := os.ReadFile(pkl.PrivateKey)
+func SshExecutor(config target.SshConfig) (interfaces.CommandExecutor, error) {
+	key, err := os.ReadFile(config.PrivateKey)
 	if err != nil {
 		log.Fatalf("Unable to read private key: %v", err)
 	}
@@ -90,22 +108,26 @@ func SshExecutor(pkl target.SshConfig) (interfaces.CommandExecutor, error) {
 	}
 
 	sshConfig := &ssh.ClientConfig{
-		User: pkl.User,
+		User: config.User,
 		Auth: []ssh.AuthMethod{
 			ssh.PublicKeys(signer),
 		},
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
-	client, err := ssh.Dial("tcp", pkl.Address, sshConfig)
+	client, err := ssh.Dial("tcp", config.Address, sshConfig)
+	if err != nil {
+		return nil, err
+	}
+	evaluator, err := pkl.NewEvaluator(context.Background())
 	if err != nil {
 		return nil, err
 	}
 
-	return sshExecutor{pkl: pkl, client: client}, nil
+	return &sshExecutor{pkl: config, client: client, evaluator: evaluator}, nil
 }
 
 // Run implements interfaces.CommandExecutor.
-func (s sshExecutor) Run(command string) (string, error) {
+func (s *sshExecutor) Run(command string) (string, error) {
 	session, err := s.client.NewSession()
 	if err != nil {
 		return "", fmt.Errorf("error creating new session: %w", err)
@@ -119,6 +141,9 @@ func (s sshExecutor) Run(command string) (string, error) {
 	return string(output), err
 }
 
-func (s sshExecutor) Close() error {
+func (s *sshExecutor) Close() error {
+	if err := s.evaluator.Close(); err != nil {
+		return err
+	}
 	return s.client.Close()
 }

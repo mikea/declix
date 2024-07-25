@@ -1,0 +1,30 @@
+amends ".../resources/Resources.pkl"
+
+import "systemd.pkl"
+import ".../content/Content.pkl"
+import ".../filesystem/FileSystem.pkl"
+
+resources { 
+    new systemd.UnitFile {
+        path = "/lib/systemd/system/test1.service"
+        state = new FileSystem.FilePresent {
+            content = """
+                [Service]
+                ExecStart=/bin/true
+                """
+            owner = "root"
+            group = "root"
+            permissions = "644"
+        }
+        afterAction {
+            reloadOrRestart = "test1.service"
+        }
+    }
+    new systemd.Service {
+        name = "test1.service"
+        state = new {
+            enabled = true
+        }
+    }
+}
+

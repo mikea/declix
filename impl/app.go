@@ -12,12 +12,17 @@ import (
 
 type App struct {
 	Target    *target.SshConfig
-	Resources []interfaces.Resource
-	States    []interfaces.State
-	Expected  []interfaces.State
-	Errors    []error
-	Actions   []interfaces.Action
+	Resources []*ResourceState
 	Executor  interfaces.CommandExecutor
+}
+
+type ResourceState struct {
+	Resource interfaces.Resource
+	Error    error
+
+	Current  interfaces.State
+	Expected interfaces.State
+	Action   interfaces.Action
 }
 
 func (app *App) Dispose() {
@@ -27,8 +32,17 @@ func (app *App) Dispose() {
 }
 
 func (app *App) HasErrors() bool {
-	for _, err := range app.Errors {
-		if err != nil {
+	for _, r := range app.Resources {
+		if r.Error != nil {
+			return true
+		}
+	}
+	return false
+}
+
+func (app *App) HasActions() bool {
+	for _, r := range app.Resources {
+		if r.Action != nil {
 			return true
 		}
 	}
@@ -37,8 +51,8 @@ func (app *App) HasErrors() bool {
 
 func (app *App) ApplyActions() error {
 	totalActions := 0
-	for _, a := range app.Actions {
-		if a != nil {
+	for _, r := range app.Resources {
+		if r.Action != nil {
 			totalActions += 1
 		}
 	}
@@ -48,18 +62,18 @@ func (app *App) ApplyActions() error {
 		return err
 	}
 
-	for i, action := range app.Actions {
-		if action == nil {
+	for _, r := range app.Resources {
+		if r.Action == nil {
 			continue
 		}
-		progress.UpdateTitle(action.StyledString(app.Resources[i]))
+		progress.UpdateTitle(r.Action.StyledString(r.Resource))
 		progress.Increment()
 
-		err = app.Resources[i].RunAction(app.Executor, app.Actions[i], app.States[i], app.Expected[i])
+		r.Error = r.Resource.RunAction(app.Executor, r.Action, r.Current, r.Expected)
 		if err != nil {
-			pterm.Println(pterm.BgRed.Sprint("E ", app.Actions[i].StyledString(app.Resources[i])), err)
+			pterm.Println(pterm.BgRed.Sprint("E ", r.Action.StyledString(r.Resource)), err)
 		} else {
-			pterm.Println(pterm.FgGreen.Sprint("\u2713"), app.Actions[i].StyledString(app.Resources[i]))
+			pterm.Println(pterm.FgGreen.Sprint("\u2713"), r.Action.StyledString(r.Resource))
 		}
 	}
 	progress.Stop()
@@ -67,12 +81,11 @@ func (app *App) ApplyActions() error {
 }
 
 func (app *App) DetermineActions() error {
-	app.Actions = make([]interfaces.Action, len(app.Resources))
-	for i, res := range app.Resources {
-		if app.Errors[i] != nil {
+	for _, r := range app.Resources {
+		if r.Error != nil {
 			continue
 		}
-		app.Actions[i], app.Errors[i] = res.DetermineAction(app.States[i], app.Expected[i])
+		r.Action, r.Error = r.Resource.DetermineAction(r.Current, r.Expected)
 	}
 
 	return nil
@@ -90,7 +103,17 @@ func (app *App) DetermineStates() error {
 		return err
 	}
 
-	app.States, app.Expected, app.Errors = DetermineStates(app.Resources, app.Executor, *progress)
+	for _, r := range app.Resources {
+		progress.UpdateTitle(r.Resource.GetId())
+		progress.Increment()
+
+		r.Expected, r.Error = r.Resource.ExpectedState()
+		if r.Error != nil {
+			continue
+		}
+		r.Current, r.Error = r.Resource.DetermineState(app.Executor)
+	}
+
 	progress.Stop()
 	return nil
 }
@@ -101,8 +124,13 @@ func (app *App) LoadResources(fileName string) error {
 		return fmt.Errorf("loading resources file: %w", err)
 	}
 
-	app.Resources = CreateResources(resourcesPkl.Resources)
-	app.Errors = make([]error, len(app.Resources))
+	app.Resources = make([]*ResourceState, len(resourcesPkl.Resources))
+	for i, pkl := range resourcesPkl.Resources {
+		app.Resources[i] = &ResourceState{
+			Resource: CreateResource(pkl),
+		}
+	}
+
 	return nil
 }
 

@@ -126,7 +126,7 @@ type state struct {
 }
 
 // StyledString implements interfaces.ResouceStatus.
-func (s state) StyledString(resource interfaces.Resource) string {
+func (s state) GetStyledString() string {
 	if !s.Present {
 		return pterm.FgRed.Sprint("missing")
 	} else {

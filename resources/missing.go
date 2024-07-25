@@ -1,11 +1,7 @@
 package resources
 
-import (
-	"mikea/declix/interfaces"
+import "github.com/pterm/pterm"
 
-	"github.com/pterm/pterm"
-)
-
-func (m *Missing) StyledString(r interfaces.Resource) string {
+func (m *Missing) GetStyledString() string {
 	return pterm.FgRed.Sprint("missing")
 }

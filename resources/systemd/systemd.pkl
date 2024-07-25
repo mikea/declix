@@ -1,9 +1,10 @@
 @go.Package { name = "mikea/declix/resources/systemd" }
 abstract module mikea.declix.resources.systemd
 
-import "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.7.0#/go.pkl" 
+import "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.8.0#/go.pkl" 
 import ".../Resources.pkl"
 import ".../filesystem/FileSystem.pkl"
+import "pkl:reflect"
 
 class UnitFile extends FileSystem.File {
     afterAction: AfterAction
@@ -14,4 +15,41 @@ class AfterAction {
     restart: String?
     reload: String?
     reloadOrRestart: String?
+}
+
+abstract class Unit extends Resources.Resource {
+    name: String
+
+    fixed systemctl: String = "sudo systemctl"
+    fixed _enabledCmd: String = """
+        if \(systemctl) is-enabled \(name) &> /dev/null; then
+            echo "enabled = true"
+        else
+            echo "enabled = false"
+        fi
+        """
+}
+
+class Service extends Unit {
+    type: "service"
+    state: ServiceState
+
+    fixed id: String = type + ":" + name
+    fixed _stateCmd: String = """
+        \(_enabledCmd)
+        """
+    fixed _cmds: _ServiceStateScripts = state._cmds(this)
+}
+
+class ServiceState {
+    enabled: Boolean
+
+    function _cmds(s: Service): _ServiceStateScripts = new {
+        enable = if (enabled) "\(s.systemctl) enable \(s.name)" 
+            else "\(s.systemctl) disable \(s.name)"
+    }
+}
+
+class _ServiceStateScripts {
+    enable: String
 }

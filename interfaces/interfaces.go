@@ -14,13 +14,16 @@ type Resource interface {
 }
 
 type State interface {
-	StyledString(resource Resource) string
+	GetStyledString() string
 }
 
 type CommandExecutor interface {
 	Close() error
 	MkTemp() (string, error)
 	Run(command string) (string, error)
+
+	Execute(command string) error
+	Evaluate(command string, out any) error
 
 	Upload(content io.Reader, remotePath string, permissions string, size int64) error
 	UploadTemp(content io.Reader, size int64) (string, error)

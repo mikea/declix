@@ -22,7 +22,7 @@ type DirImpl struct {
 
 	Id string `pkl:"id"`
 
-	DetermineStateCmd string `pkl:"determineStateCmd"`
+	DetermineStateCmd string `pkl:"_determineStateCmd"`
 
 	Path string `pkl:"path"`
 }

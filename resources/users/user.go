@@ -3,6 +3,7 @@ package users
 import (
 	"fmt"
 	"mikea/declix/interfaces"
+	"mikea/declix/resources"
 	"slices"
 	"strings"
 
@@ -44,7 +45,7 @@ func (u *UserImpl) DetermineState(executor interfaces.CommandExecutor) (interfac
 	}
 
 	if !output.Present {
-		return &UserMissing{}, nil
+		return &resources.Missing{}, nil
 	}
 
 	return &UserPresent{
@@ -78,8 +79,8 @@ func (a userAction) StyledString(resource interfaces.Resource) string {
 
 func (u *UserImpl) DetermineAction(s interfaces.State, e interfaces.State) (interfaces.Action, error) {
 	switch expectedState := e.(type) {
-	case *UserMissing:
-		if _, ok := s.(*UserMissing); ok {
+	case *resources.Missing:
+		if _, ok := s.(*resources.Missing); ok {
 			return nil, nil
 		}
 		return userDelete, nil
@@ -129,14 +130,10 @@ func (u *UserImpl) RunAction(executor interfaces.CommandExecutor, a interfaces.A
 	}
 }
 
-func (state *UserPresent) StyledString(r interfaces.Resource) string {
+func (state *UserPresent) GetStyledString() string {
 	if state.Groups != nil {
-		return pterm.FgGreen.Sprintf("%s %d %s %v", r.(*UserImpl).Login, state.Uid, state.Group, state.Groups)
+		return pterm.FgGreen.Sprintf("%d %s %v", state.Uid, state.Group, state.Groups)
 	} else {
-		return pterm.FgGreen.Sprintf("%s %d %s", r.(*UserImpl).Login, state.Uid, state.Group)
+		return pterm.FgGreen.Sprintf("%d %s", state.Uid, state.Group)
 	}
-}
-
-func (state *UserMissing) StyledString(r interfaces.Resource) string {
-	return pterm.FgRed.Sprint("missing")
 }

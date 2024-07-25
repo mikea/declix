@@ -1,7 +1,7 @@
 @go.Package { name = "mikea/declix/content" }
 abstract module mikea.declix.Content
 
-import "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.7.0#/go.pkl" 
+import "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.8.0#/go.pkl" 
 
 typealias Content = String | File | Url | Base64;
 

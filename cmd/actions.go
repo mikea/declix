@@ -35,18 +35,16 @@ th the desired state.`,
 			return err
 		}
 
-		for i, action := range app.Actions {
-			if app.Errors[i] != nil {
-				pterm.Println(pterm.BgRed.Sprint(app.Resources[i].GetId()), app.Errors[i])
-			} else if action != nil {
-				pterm.Println(action.StyledString(app.Resources[i]))
+		for _, r := range app.Resources {
+			if r.Error != nil {
+				pterm.Println(pterm.BgRed.Sprint(r.Resource.GetId()), r.Error)
+			} else if r.Action != nil {
+				pterm.Println(r.Action.StyledString(r.Resource))
 			}
 		}
 
-		for _, err := range app.Errors {
-			if err != nil {
-				return fmt.Errorf("there were errors determining actions")
-			}
+		if app.HasErrors() {
+			return fmt.Errorf("there were errors determining actions")
 		}
 
 		return nil

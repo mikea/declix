@@ -12,7 +12,7 @@ resources {
     
     new Users.Group {
         name = "test_group"
-        state = new Users.GroupMissing { }
+        state = new Missing { }
     }
 
     new Users.Group {

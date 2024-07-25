@@ -1,0 +1,3 @@
+// function fgRed(text: String) = "\u{1b}[31m\(text)\u{1b}[0m"
+// function fgRed(text: String) = "\u{1b}[31m\(text)\u{1b}[0m"
+function fgRed(text: String): String = "= \(text) ="

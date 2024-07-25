@@ -140,7 +140,7 @@ func DeterminePackageState(executor interfaces.CommandExecutor, name string) (in
 }
 
 // StyledString implements interfaces.ResouceStatus.
-func (s State) StyledString(resource interfaces.Resource) string {
+func (s State) GetStyledString() string {
 	if s.Present {
 		if s.Version == "" {
 			return pterm.FgGreen.Sprint("installed")

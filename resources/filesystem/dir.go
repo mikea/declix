@@ -112,6 +112,6 @@ func (d *DirImpl) RunAction(executor interfaces.CommandExecutor, a interfaces.Ac
 	}
 }
 
-func (state *DirPresentImpl) StyledString(r interfaces.Resource) string {
+func (state *DirPresentImpl) GetStyledString() string {
 	return pterm.FgGreen.Sprintf("%s:%s %s", state.Owner, state.Group, state.Permissions)
 }
