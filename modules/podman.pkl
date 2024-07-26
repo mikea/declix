@@ -1,0 +1,74 @@
+function run(r: Run): String = r.render()
+
+class Run {
+    image: String
+    name: String?
+    replace: Boolean?
+    user: String?
+    group: String?
+
+    ports: Listing<Port>
+    volumes: Listing<Volume>
+    environment: Mapping<String, String>
+
+    function render(): String = new Listing {
+        "podman run"
+        when (name != null) { "--name \(name)" }
+        when (replace ?? False) { "--replace" }
+        when (user != null || group != null) {
+            "-u"
+            new Listing {
+                user
+                when (group != null) { group }
+            }.join(":")
+        }
+        for (port in ports) { port.render() }
+        for (volume in volumes) { volume.render() }
+        for (n, v in environment) { 
+            "-e \(n)=\(v)"
+        }
+        image
+    }.join(" ")
+}
+
+class Port {
+    ip: String?
+    hostPort: UInt16?
+    containerPort: UInt16
+    protocol: String?
+
+    function render(): String = new Listing {
+        "-p "
+        when (ip != null) { "\(ip):" }
+        when (hostPort != null) { "\(hostPort):" }
+        containerPort
+        when (protocol != null) { "/\(protocol)" }
+    }.join("")
+}
+
+class Volume {
+    host: String
+    containerDir: String
+    options: String?
+
+    function render(): String = "-v " + new Listing {
+        host
+        containerDir
+        when (options != null) {
+            options
+        }
+    }.join(":")
+}
+
+fixed tzVolumes: Listing<Volume> = new {
+    new Volume {
+        host = "/etc/timezone"
+        containerDir = host
+        options = "ro"
+    }
+    new Volume {
+        host = "/etc/localtime"
+        containerDir = host
+        options = "ro"
+    }
+}
