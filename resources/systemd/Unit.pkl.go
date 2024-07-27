@@ -10,5 +10,7 @@ type Unit interface {
 
 	GetSystemctl() string
 
-	GetEnabledCmd() string
+	GetIsEnabled() string
+
+	GetIsActive() string
 }

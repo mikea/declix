@@ -47,7 +47,7 @@ var _ = Describe("Systemd", func() {
 		Expect(app.Resources[1]).To(impl.HaveStyleStrings(
 			"\x1b[32menabled\x1b[0m",
 			"\x1b[31mdisabled\x1b[0m",
-			"\x1b[32m✓service:test1.service\x1b[0m"))
+			"\x1b[32m+\x1b[0mservice:test1.service"))
 
 		err = app.DetermineStates()
 		Expect(err).NotTo(HaveOccurred())

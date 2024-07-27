@@ -1,8 +1,8 @@
 package systemd
 
 import (
-	"fmt"
 	"mikea/declix/interfaces"
+	"strings"
 
 	"github.com/pterm/pterm"
 )
@@ -17,57 +17,84 @@ func (s *ServiceImpl) DetermineState(executor interfaces.CommandExecutor) (inter
 	return state, nil
 }
 
-type action int
-
 // StyledString implements interfaces.Action.
-func (a action) StyledString(resource interfaces.Resource) string {
-	switch a {
-	case toDisable:
-		return pterm.FgRed.Sprint("\u2a2f", resource.GetId())
-	case toEnable:
-		return pterm.FgGreen.Sprint("\u2713", resource.GetId())
-	default:
-		panic(fmt.Sprintf("unexpected systemd.action: %#v", a))
+func (a *action) StyledString(resource interfaces.Resource) string {
+	var result = ""
+
+	if a.enable != nil {
+		if *a.enable {
+			result = result + pterm.FgGreen.Sprint("+")
+		} else {
+			result = result + pterm.FgRed.Sprint("-")
+		}
 	}
+
+	if a.start != nil {
+		if *a.start {
+			result = result + pterm.FgGreen.Sprint(">")
+		} else {
+			result = result + pterm.FgRed.Sprint("_")
+		}
+	}
+
+	return result + resource.GetId()
 }
 
-const (
-	toEnable action = iota
-	toDisable
-)
+type action struct {
+	enable *bool
+	start  *bool
+}
 
 func (s *ServiceImpl) DetermineAction(c interfaces.State, e interfaces.State) (interfaces.Action, error) {
 	current := c.(*ServiceState)
 	expected := e.(*ServiceState)
 
-	if expected.Enabled {
-		if current.Enabled {
-			return nil, nil
-		}
-		return toEnable, nil
+	a := &action{}
+
+	if expected.Enabled != nil && *expected.Enabled != *current.Enabled {
+		a.enable = expected.Enabled
+	}
+	if expected.Active != nil && *expected.Active != *current.Active {
+		a.start = expected.Active
 	}
 
-	if !current.Enabled {
-		return nil, nil
-	}
-	return toDisable, nil
+	return a, nil
 }
 
 func (s *ServiceImpl) RunAction(executor interfaces.CommandExecutor, a interfaces.Action, c interfaces.State, e interfaces.State) error {
-	switch a.(action) {
-	case toEnable:
-		return executor.Execute(s.Cmds.Enable)
-	case toDisable:
-		return executor.Execute(s.Cmds.Enable)
-	}
+	action := a.(*action)
 
-	panic(fmt.Sprintf("unexpected systemd.action: %v %+v %+v", a, c, e))
+	if action.enable != nil {
+		if err := executor.Execute(*s.Cmds.Enable); err != nil {
+			return err
+		}
+	}
+	if action.start != nil {
+		if err := executor.Execute(*s.Cmds.Start); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (s *ServiceState) GetStyledString() string {
-	if s.Enabled {
-		return pterm.FgGreen.Sprint("enabled")
-	} else {
-		return pterm.FgRed.Sprint("disabled")
+	var result []string
+
+	if s.Enabled != nil {
+		if *s.Enabled {
+			result = append(result, pterm.FgGreen.Sprint("enabled"))
+		} else {
+			result = append(result, pterm.FgRed.Sprint("disabled"))
+		}
 	}
+
+	if s.Active != nil {
+		if *s.Active {
+			result = append(result, pterm.FgGreen.Sprint("active"))
+		} else {
+			result = append(result, pterm.FgRed.Sprint("inactive"))
+		}
+	}
+
+	return strings.Join(result, " ")
 }

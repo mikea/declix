@@ -2,5 +2,7 @@
 package systemd
 
 type ServiceStateScripts struct {
-	Enable string `pkl:"enable"`
+	Enable *string `pkl:"enable"`
+
+	Start *string `pkl:"start"`
 }

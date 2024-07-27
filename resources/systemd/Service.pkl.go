@@ -32,7 +32,9 @@ type ServiceImpl struct {
 
 	Systemctl string `pkl:"systemctl"`
 
-	EnabledCmd string `pkl:"_enabledCmd"`
+	IsEnabled string `pkl:"_isEnabled"`
+
+	IsActive string `pkl:"_isActive"`
 }
 
 func (rcv *ServiceImpl) GetType() string {
@@ -63,6 +65,10 @@ func (rcv *ServiceImpl) GetSystemctl() string {
 	return rcv.Systemctl
 }
 
-func (rcv *ServiceImpl) GetEnabledCmd() string {
-	return rcv.EnabledCmd
+func (rcv *ServiceImpl) GetIsEnabled() string {
+	return rcv.IsEnabled
+}
+
+func (rcv *ServiceImpl) GetIsActive() string {
+	return rcv.IsActive
 }

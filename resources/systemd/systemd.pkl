@@ -21,11 +21,18 @@ abstract class Unit extends Resources.Resource {
     name: String
 
     fixed systemctl: String = "sudo systemctl"
-    fixed _enabledCmd: String = """
+    fixed _isEnabled: String = """
         if \(systemctl) is-enabled \(name) &> /dev/null; then
             echo "enabled = true"
         else
             echo "enabled = false"
+        fi
+        """
+    fixed _isActive: String = """
+        if \(systemctl) is-active \(name) &> /dev/null; then
+            echo "active = true"
+        else
+            echo "active = false"
         fi
         """
 }
@@ -36,22 +43,31 @@ class Service extends Unit {
 
     fixed id: String = type + ":" + name
     fixed _stateCmd: String = """
-        \(_enabledCmd)
+        \(_isEnabled)
+        \(_isActive)
         """
     fixed _cmds: _ServiceStateScripts = state._cmds(this)
 }
 
 class ServiceState {
-    enabled: Boolean
+    enabled: Boolean?
+    active: Boolean?
 
     function _cmds(s: Service): _ServiceStateScripts = new {
-        enable = if (enabled) "\(s.systemctl) enable \(s.name)" 
-            else "\(s.systemctl) disable \(s.name)"
+        when (enabled != null) {
+            enable = if (enabled) "\(s.systemctl) enable \(s.name)" 
+                else "\(s.systemctl) disable \(s.name)"
+        }
+        when (active != null) {
+            start = if (active) "\(s.systemctl) start \(s.name)" 
+                else "\(s.systemctl) stop \(s.name)"
+        }
     }
 }
 
 class _ServiceStateScripts {
-    enable: String
+    enable: String?
+    start: String?
 }
 
 abstract class Section {
