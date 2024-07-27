@@ -156,3 +156,12 @@ func (app *App) LoadTarget(fileName string) error {
 
 	return nil
 }
+
+func (app *App) PrintErrors() {
+	pterm.Println(pterm.FgRed.Sprint("Errors:"))
+	for _, r := range app.Resources {
+		if r.Error != nil {
+			pterm.Println(pterm.BgRed.Sprint(r.Resource.GetId()), pterm.FgRed.Sprint(r.Error))
+		}
+	}
+}

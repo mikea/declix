@@ -36,14 +36,13 @@ th the desired state.`,
 		}
 
 		for _, r := range app.Resources {
-			if r.Error != nil {
-				pterm.Println(pterm.BgRed.Sprint(r.Resource.GetId()), r.Error)
-			} else if r.Action != nil {
+			if r.Action != nil {
 				pterm.Println(r.Action.StyledString(r.Resource))
 			}
 		}
 
 		if app.HasErrors() {
+			app.PrintErrors()
 			return fmt.Errorf("there were errors determining actions")
 		}
 

@@ -64,13 +64,7 @@ func executeState() error {
 	pterm.DefaultTable.WithHasHeader().WithHeaderRowSeparator("-").WithData(tableData).Render()
 
 	if app.HasErrors() {
-		pterm.Println(pterm.FgRed.Sprint("Errors:"))
-		for _, r := range app.Resources {
-			if r.Error != nil {
-				pterm.Println(pterm.BgRed.Sprint(r.Resource.GetId()), pterm.FgRed.Sprint(r.Error))
-			}
-		}
-
+		app.PrintErrors()
 		return fmt.Errorf("errors occured")
 	}
 

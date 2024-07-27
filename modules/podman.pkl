@@ -1,3 +1,7 @@
+import ".../resources/Resources.pkl"
+import ".../resources/systemd/systemd.pkl"
+import ".../resources/filesystem/FileSystem.pkl"
+
 function run(r: Run): String = r.render()
 
 class Run {
@@ -11,9 +15,12 @@ class Run {
     volumes: Listing<Volume>
     environment: Mapping<String, String>
 
+    conmonPidFile: String?
+    cidFile: String?
+
     function render(): String = new Listing {
         "podman run"
-        when (name != null) { "--name \(name)" }
+        when (name != null) { "--name=\(name)" }
         when (replace ?? False) { "--replace" }
         when (user != null || group != null) {
             "-u"
@@ -22,6 +29,8 @@ class Run {
                 when (group != null) { group }
             }.join(":")
         }
+        when (conmonPidFile != null) { "--conmon-pidfile=\(conmonPidFile)" }
+        when (cidFile != null) { "--cidfile=\(cidFile)" }
         for (port in ports) { port.render() }
         for (volume in volumes) { volume.render() }
         for (n, v in environment) { 
@@ -70,5 +79,50 @@ fixed tzVolumes: Listing<Volume> = new {
         host = "/etc/localtime"
         containerDir = host
         options = "ro"
+    }
+}
+
+function service(serviceName: String, r: Run): Listing<Resources.Resource> = new Listing {
+    new systemd.UnitFile {
+        path = "/etc/systemd/system/\(serviceName).service"
+        state = new FileSystem.FilePresent {
+            content = systemd.serviceFile(new systemd.ServiceFile {
+                unit = new {
+                    description = serviceName
+                    wants = "network-online.target"
+                    after = "network-online.target"
+                    requiresMountsFor = "/run/containers/storage"
+                }
+                service = new {
+                    environment = new {
+                        ["PODMAN_SYSTEMD_UNIT"] = "%n"
+                    }
+                    restart = "on-failure"
+                    timeoutStopSec = 70
+                    execStart = run((r) {
+                        name = serviceName
+                        replace = true
+                    })
+                    type = "simple"
+                }
+                install = new {
+                    wantedBy = "default.target"
+                }
+            })
+            owner = "root"
+            group = "root"
+            permissions = "644"
+        }
+
+        afterAction {
+            reloadOrRestart = "\(serviceName).service"
+        }
+    }
+    new systemd.Service {
+        name = "\(serviceName).service"
+        state = new {
+            enabled = true
+            active = true
+        }
     }
 }

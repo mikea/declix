@@ -40,6 +40,10 @@ func (a *action) StyledString(resource interfaces.Resource) string {
 	return result + resource.GetId()
 }
 
+func (a *action) empty() bool {
+	return a.enable == nil && a.start == nil
+}
+
 type action struct {
 	enable *bool
 	start  *bool
@@ -56,6 +60,10 @@ func (s *ServiceImpl) DetermineAction(c interfaces.State, e interfaces.State) (i
 	}
 	if expected.Active != nil && *expected.Active != *current.Active {
 		a.start = expected.Active
+	}
+
+	if a.empty() {
+		return nil, nil
 	}
 
 	return a, nil

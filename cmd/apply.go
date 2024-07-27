@@ -36,7 +36,8 @@ var applyCmd = &cobra.Command{
 		}
 
 		if app.HasErrors() {
-			return fmt.Errorf("there were errors determining actions")
+			app.PrintErrors()
+			return fmt.Errorf("there were errors applying actions")
 		}
 
 		return nil
