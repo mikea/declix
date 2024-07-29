@@ -12,6 +12,11 @@ import (
 )
 
 func Sha256(pkl any) (string, error) {
+	if render, ok := pkl.(Render); ok {
+		s := render.GetResult()
+		return readAndHash(noCloseReadCloser{strings.NewReader(s)})
+	}
+
 	switch c := pkl.(type) {
 	case *File:
 		if c.Sha256 != nil {
@@ -54,6 +59,11 @@ func readAndHash(reader io.ReadCloser) (string, error) {
 }
 
 func Open(pkl any) (io.ReadCloser, int64, error) {
+	if render, ok := pkl.(Render); ok {
+		s := render.GetResult()
+		return noCloseReadCloser{strings.NewReader(s)}, int64(len(s)), nil
+	}
+
 	switch c := pkl.(type) {
 	case *File:
 		f, err := os.Open(c.File)

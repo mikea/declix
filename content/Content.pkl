@@ -3,7 +3,7 @@ abstract module mikea.declix.Content
 
 import "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.8.0#/go.pkl" 
 
-typealias Content = String | File | Url | Base64;
+typealias Content = String | File | Url | Base64 | Render;
 
 class File {
     file: String
@@ -23,4 +23,10 @@ class Base64 {
 function Resource(r: Resource): Base64 = new Base64 {
     base64 = r.base64
     sha256 = r.sha256
+}
+
+abstract class Render {
+    abstract function render(): String
+
+    _result: String = render()
 }

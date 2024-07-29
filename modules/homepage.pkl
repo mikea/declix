@@ -1,0 +1,76 @@
+class ServicesFile {
+    sections: Listing<ServicesSection>
+
+    function render() = new YamlRenderer{}.renderDocument(new Listing {
+        for (section in sections) { section.render() }
+    })
+}
+
+class ServicesSection {
+    name: String
+    services: Listing<Service>
+
+    function render() = new Dynamic {
+        [name] = new Listing {
+            for (service in services) { service.render() }
+        }
+    }
+}
+
+class Service {
+    name: String
+    href: String
+    icon: String?
+    description: String?
+    ping: String?
+
+    function render() = new Dynamic {
+        [name] = new Listing {
+            new Dynamic {
+                ["href"] = href
+                when (icon != null) { ["icon"] = icon }
+                when (description != null) { ["description"] = description }
+                when (ping != null) { ["ping"] = ping }
+            }
+        }
+    }
+}
+
+
+class BookmarksFile {
+    sections: Listing<BookmarksSection>
+
+    function render() = new YamlRenderer{}.renderDocument(new Listing {
+        for (section in sections) { section.render() }
+    })
+}
+
+class BookmarksSection {
+    name: String
+    bookmarks: Listing<Bookmark>
+
+    function render() = new Dynamic {
+        [name] = new Listing {
+            for (bookmark in bookmarks) { bookmark.render() }
+        }
+    }
+}
+
+class Bookmark {
+    name: String
+    href: String
+    icon: String?
+    abbr: String(length <= 2)?
+    description: String?
+
+    function render() = new Dynamic {
+        [name] = new Listing {
+            new Dynamic {
+                ["href"] = href
+                when (abbr != null) { ["abbr"] = abbr }
+                when (icon != null) { ["icon"] = icon }
+                when (description != null) { ["description"] = description }
+            }
+        }
+    }
+}

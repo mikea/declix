@@ -96,6 +96,20 @@ type ServiceSection interface {
 	GetUSBFunctionStrings() *string
 
 	GetWatchdogSec() *string
+
+	GetFinalKillSignal() *string
+
+	GetKillMode() *string
+
+	GetKillSignal() *string
+
+	GetRestartKillSignal() *string
+
+	GetSendSIGHUP() *string
+
+	GetSendSIGKILL() *string
+
+	GetWatchdogSignal() *string
 }
 
 var _ ServiceSection = (*ServiceSectionImpl)(nil)
@@ -188,6 +202,20 @@ type ServiceSectionImpl struct {
 	USBFunctionStrings *string `pkl:"uSBFunctionStrings"`
 
 	WatchdogSec *string `pkl:"watchdogSec"`
+
+	FinalKillSignal *string `pkl:"finalKillSignal"`
+
+	KillMode *string `pkl:"killMode"`
+
+	KillSignal *string `pkl:"killSignal"`
+
+	RestartKillSignal *string `pkl:"restartKillSignal"`
+
+	SendSIGHUP *string `pkl:"sendSIGHUP"`
+
+	SendSIGKILL *string `pkl:"sendSIGKILL"`
+
+	WatchdogSignal *string `pkl:"watchdogSignal"`
 }
 
 func (rcv *ServiceSectionImpl) GetName() any {
@@ -364,4 +392,32 @@ func (rcv *ServiceSectionImpl) GetUSBFunctionStrings() *string {
 
 func (rcv *ServiceSectionImpl) GetWatchdogSec() *string {
 	return rcv.WatchdogSec
+}
+
+func (rcv *ServiceSectionImpl) GetFinalKillSignal() *string {
+	return rcv.FinalKillSignal
+}
+
+func (rcv *ServiceSectionImpl) GetKillMode() *string {
+	return rcv.KillMode
+}
+
+func (rcv *ServiceSectionImpl) GetKillSignal() *string {
+	return rcv.KillSignal
+}
+
+func (rcv *ServiceSectionImpl) GetRestartKillSignal() *string {
+	return rcv.RestartKillSignal
+}
+
+func (rcv *ServiceSectionImpl) GetSendSIGHUP() *string {
+	return rcv.SendSIGHUP
+}
+
+func (rcv *ServiceSectionImpl) GetSendSIGKILL() *string {
+	return rcv.SendSIGKILL
+}
+
+func (rcv *ServiceSectionImpl) GetWatchdogSignal() *string {
+	return rcv.WatchdogSignal
 }

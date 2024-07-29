@@ -8,6 +8,7 @@ class Run {
     image: String
     name: String?
     replace: Boolean?
+    privileged: Boolean?
     user: String?
     group: String?
 
@@ -17,11 +18,20 @@ class Run {
 
     conmonPidFile: String?
     cidFile: String?
+    detach: Boolean?
+    dns: String?
+
+    capAdd: Listing<String>
+    capDrop: Listing<String>
+    devices: Listing<Device>
+    sysctls: Mapping<String, String>
+
 
     function render(): String = new Listing {
         "podman run"
         when (name != null) { "--name=\(name)" }
-        when (replace ?? False) { "--replace" }
+        when (replace ?? false) { "--replace" }
+        when (privileged ?? false) { "--privileged" }
         when (user != null || group != null) {
             "-u"
             new Listing {
@@ -31,13 +41,29 @@ class Run {
         }
         when (conmonPidFile != null) { "--conmon-pidfile=\(conmonPidFile)" }
         when (cidFile != null) { "--cidfile=\(cidFile)" }
+        when (detach != null) { "-d=\(detach)" }
+        when (dns != null) { "--dns=\(dns)" }
         for (port in ports) { port.render() }
         for (volume in volumes) { volume.render() }
-        for (n, v in environment) { 
-            "-e \(n)=\(v)"
-        }
+        for (n, v in environment) { "-e \(n)=\"\(v)\"" }
+        for (cap in capAdd) { "--cap-add=\(cap)" }
+        for (cap in capDrop) { "--cap-drop=\(cap)" }
+        for (device in devices) { device.render() }
+        for (n, v in sysctls) { "--sysctl=\(n)=\(v)" }
         image
     }.join(" ")
+}
+
+class Device {
+    host: String
+    container: String?
+    permissions: String?
+
+    function render(): String = new Listing {
+        "--device=\(host)"
+        when (container != null) { ":\(container)"}
+        when (permissions != null) { ":\(permissions)"}
+    }.join("")
 }
 
 class Port {
@@ -86,6 +112,7 @@ function service(serviceName: String, r: Run): Listing<Resources.Resource> = new
     new systemd.UnitFile {
         path = "/etc/systemd/system/\(serviceName).service"
         state = new FileSystem.FilePresent {
+            // https://www.redhat.com/sysadmin/podman-shareable-systemd-services
             content = systemd.serviceFile(new systemd.ServiceFile {
                 unit = new {
                     description = serviceName
@@ -99,11 +126,18 @@ function service(serviceName: String, r: Run): Listing<Resources.Resource> = new
                     }
                     restart = "on-failure"
                     timeoutStopSec = 70
+                    execStartPre = "/usr/bin/rm -f %t/%n.pid %t/%n.cid"
                     execStart = run((r) {
                         name = serviceName
                         replace = true
+                        conmonPidFile = "%t/%n.pid"
+                        cidFile = "%t/%n.cid"
+                        detach = true
                     })
-                    type = "simple"
+                    execStop="/usr/bin/sh -c \"podman rm -f `cat %t/%n.cid`\""
+                    type = "forking"
+                    killMode = "control-group"
+                    pIDFile = "%t/%n.pid"
                 }
                 install = new {
                     wantedBy = "default.target"

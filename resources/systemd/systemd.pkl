@@ -4,6 +4,7 @@ abstract module mikea.declix.resources.systemd
 import "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.8.0#/go.pkl" 
 import ".../Resources.pkl"
 import ".../filesystem/FileSystem.pkl"
+import ".../content/Content.pkl"
 import "pkl:reflect"
 
 class UnitFile extends FileSystem.File {
@@ -191,6 +192,15 @@ class ServiceSection extends Section {
     uSBFunctionStrings: String?
     watchdogSec: String?
 
+    // todo: extract KillMode
+    finalKillSignal: String?
+    killMode: String?
+    killSignal: String?
+    restartKillSignal: String?
+    sendSIGHUP: String?
+    sendSIGKILL: String?
+    watchdogSignal: String?
+
     function render(): String = "[\(name)]\n" + new Listing {
         for (k, v in this.toMap()) {
             when (k != "name" && k != "environment" && v != null) {
@@ -207,7 +217,7 @@ class ServiceSection extends Section {
 typealias ServiceType = "simple" | "exec" | "forking" | "oneshot" | "dbus" | "notify" | "notify-reload" | "idle"
 typealias ServiceExitType = "main" | "cgroup"
 
-class ServiceFile {
+class ServiceFile extends Content.Render {
     unit: UnitSection
     install: InstallSection
     service: ServiceSection
@@ -219,4 +229,4 @@ class ServiceFile {
     }.join("\n")
 }
 
-function serviceFile(service: ServiceFile): String = service.render()
+function serviceFile(service: ServiceFile): ServiceFile = service
