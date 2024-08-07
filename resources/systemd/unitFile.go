@@ -22,12 +22,12 @@ func (f *UnitFileImpl) RunAction(executor interfaces.CommandExecutor, a interfac
 		}
 	}
 	if f.AfterAction.Reload != nil {
-		if _, err := executor.Run(fmt.Sprintf("sudo systemctl reload %s", *f.AfterAction.ReloadOrRestart)); err != nil {
+		if _, err := executor.Run(fmt.Sprintf("sudo systemctl reload %s", *f.AfterAction.Reload)); err != nil {
 			return err
 		}
 	}
 	if f.AfterAction.Restart != nil {
-		if _, err := executor.Run(fmt.Sprintf("sudo systemctl restart %s", *f.AfterAction.ReloadOrRestart)); err != nil {
+		if _, err := executor.Run(fmt.Sprintf("sudo systemctl restart %s", *f.AfterAction.Restart)); err != nil {
 			return err
 		}
 	}

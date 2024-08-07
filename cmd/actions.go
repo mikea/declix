@@ -35,11 +35,26 @@ th the desired state.`,
 			return err
 		}
 
+		var actions = 0
 		for _, r := range app.Resources {
 			if r.Action != nil {
-				pterm.Println(r.Action.StyledString(r.Resource))
+				actions++
 			}
 		}
+
+		tableData := make(pterm.TableData, actions+1)
+		tableData[0] = []string{"Action", "Current State", "Expected State"}
+		actions = 0
+		for _, r := range app.Resources {
+			if r.Action != nil {
+				tableData[actions+1] = []string{
+					r.Action.StyledString(r.Resource),
+					r.Current.GetStyledString(),
+					r.Expected.GetStyledString()}
+				actions++
+			}
+		}
+		pterm.DefaultTable.WithHasHeader().WithHeaderRowSeparator("-").WithData(tableData).Render()
 
 		if app.HasErrors() {
 			app.PrintErrors()

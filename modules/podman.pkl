@@ -25,6 +25,7 @@ class Run {
     capDrop: Listing<String>
     devices: Listing<Device>
     sysctls: Mapping<String, String>
+    command: Listing<String>
 
 
     function render(): String = new Listing {
@@ -51,6 +52,7 @@ class Run {
         for (device in devices) { device.render() }
         for (n, v in sysctls) { "--sysctl=\(n)=\(v)" }
         image
+        for (cmd in command) { cmd }
     }.join(" ")
 }
 
@@ -68,42 +70,40 @@ class Device {
 
 class Port {
     ip: String?
-    hostPort: UInt16?
-    containerPort: UInt16
+    host: UInt16?
+    container: UInt16
     protocol: String?
 
     function render(): String = new Listing {
         "-p "
         when (ip != null) { "\(ip):" }
-        when (hostPort != null) { "\(hostPort):" }
-        containerPort
+        when (host != null) { "\(host):" }
+        container
         when (protocol != null) { "/\(protocol)" }
     }.join("")
 }
 
 class Volume {
     host: String
-    containerDir: String
+    container: String
     options: String?
 
     function render(): String = "-v " + new Listing {
         host
-        containerDir
-        when (options != null) {
-            options
-        }
+        container
+        when (options != null) { options }
     }.join(":")
 }
 
 fixed tzVolumes: Listing<Volume> = new {
     new Volume {
         host = "/etc/timezone"
-        containerDir = host
+        container = host
         options = "ro"
     }
     new Volume {
         host = "/etc/localtime"
-        containerDir = host
+        container = host
         options = "ro"
     }
 }
@@ -135,6 +135,7 @@ function service(serviceName: String, r: Run): Listing<Resources.Resource> = new
                         detach = true
                     })
                     execStop="/usr/bin/sh -c \"podman rm -f `cat %t/%n.cid`\""
+                    execReload="podman restart \(serviceName)"
                     type = "forking"
                     killMode = "control-group"
                     pIDFile = "%t/%n.pid"
@@ -149,7 +150,7 @@ function service(serviceName: String, r: Run): Listing<Resources.Resource> = new
         }
 
         afterAction {
-            reloadOrRestart = "\(serviceName).service"
+            restart = "\(serviceName).service"
         }
     }
     new systemd.Service {

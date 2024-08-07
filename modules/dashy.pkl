@@ -1,0 +1,116 @@
+import ".../content/Content.pkl"
+
+class DashyConfig {
+    pageInfo: PageInfo
+    sections: Listing<Section>?
+    appConfig: AppConfig?
+
+    function render(): String = new YamlRenderer{}.renderDocument(this)
+}
+
+class PageInfo {
+    title: String
+    description: String?
+    footerText: String?
+    logo: String?
+
+    navLinks: Listing<NavLink>?
+}
+
+class NavLink {
+    title: String
+    path: String
+    target: String?
+}
+
+class Section {
+    name: String
+    icon: String?
+    items: Listing<Item>
+    widgets: Listing<Widget>
+    displayData: DisplayData?
+}
+
+class Item {
+    title: String
+    description: String?
+    url: String
+    icon: String?
+    target: String?
+    hotkey: UInt(this <= 9)?
+    tags: Listing<String>?
+    statusCheck: Boolean?
+    statusCheckUrl: String?
+    statusCheckHeaders: Mapping<String, String>?
+    statusCheckAllowInsecure: Boolean?
+    statusCheckAcceptCodes: String?
+    statusCheckMaxRedirects: UInt?
+    color: String?
+    rel: String?
+    backgroundColor: String?
+    provider: String?
+    displayData: DisplayData?
+}
+
+class Widget {
+
+}
+
+class DisplayData {
+
+}
+
+class AppConfig {
+    language: String?
+    defaultOpeningMethod: String?
+    statusCheck: Boolean?
+    statusCheckInterval: UInt?
+    webSearch: WebSearch?
+    backgroundImg: String?
+    enableFontAwesome: Boolean?
+    enableMaterialDesignIcons: Boolean?
+    fontAwesomeKey: String?
+    faviconApi: String?
+    auth: Auth?
+    defaultIcon: String?
+    layout: String?
+    iconSize: String?
+    colCount: UInt?
+    theme: String?
+    cssThemes: Listing<String>?
+    customColors: CustomColors?
+    externalStyleSheet: (String | Listing<String>)?
+    customCss: String?
+    hideComponents: HideComponents?
+    routingMode: String?
+    enableMultiTasking: Boolean?
+    workspaceLandingUrl: String?
+    preventWriteToDisk: Boolean?
+    preventLocalSave: Boolean?
+    disableConfiguration: Boolean?
+    disableConfigurationForNonAdmin: Boolean?
+    widgetsAlwaysUseProxy: Boolean?
+    showSplashScreen: Boolean?
+    enableErrorReporting: Boolean?
+    sentryDsn: Boolean?
+    disableSmartSort: Boolean?
+    disableUpdateChecks: Boolean?
+    enableServiceWorker: Boolean?
+    disableContextMenu: Boolean?
+}
+
+class WebSearch {
+
+}
+
+class Auth {
+
+}
+
+class CustomColors {
+
+}
+
+class HideComponents {
+
+}
