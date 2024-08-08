@@ -63,8 +63,7 @@ const (
 	userDelete
 )
 
-// StyledString implements interfaces.Action.
-func (a userAction) StyledString(resource interfaces.Resource) string {
+func (a userAction) GetStyledString(resource interfaces.Resource) string {
 	switch a {
 	case userCreate:
 		return pterm.FgGreen.Sprint("+", resource.GetId())

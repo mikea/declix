@@ -22,7 +22,7 @@ open class File extends Node  {
     state: Missing | FilePresent
 
     fixed id: String = type + ":" + path
-    fixed _determineStateCmd: String = """
+    fixed _stateCmd: String = """
         path="\(path)"
         if sudo test -f "$path"; then 
             echo "present: true" &&
@@ -44,7 +44,7 @@ class Dir extends Node  {
     state: Missing | DirPresent
 
     fixed id: String = type + ":" + path
-    fixed _determineStateCmd: String = """
+    fixed _stateCmd: String = """
         path="\(path)"
         if sudo test -d "$path"; then 
             echo "present: true" &&

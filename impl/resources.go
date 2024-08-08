@@ -8,8 +8,8 @@ import (
 	_ "mikea/declix/resources/apt"
 	_ "mikea/declix/resources/dpkg"
 	_ "mikea/declix/resources/filesystem"
-	_ "mikea/declix/resources/systemd"
 	_ "mikea/declix/resources/users"
+	_ "mikea/declix/systemd"
 )
 
 func CreateResource(r resources.Resource) interfaces.Resource {

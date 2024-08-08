@@ -2,7 +2,7 @@ amends ".../resources/Resources.pkl"
 
 import "systemd.pkl"
 import ".../content/Content.pkl"
-import ".../filesystem/FileSystem.pkl"
+import ".../resources/filesystem/FileSystem.pkl"
 
 resources { 
     new systemd.UnitFile {

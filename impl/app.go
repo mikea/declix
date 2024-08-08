@@ -66,14 +66,14 @@ func (app *App) ApplyActions() error {
 		if r.Action == nil {
 			continue
 		}
-		progress.UpdateTitle(r.Action.StyledString(r.Resource))
+		progress.UpdateTitle(r.Action.GetStyledString(r.Resource))
 		progress.Increment()
 
 		r.Error = r.Resource.RunAction(app.Executor, r.Action, r.Current, r.Expected)
 		if err != nil {
-			pterm.Println(pterm.BgRed.Sprint("E ", r.Action.StyledString(r.Resource)), err)
+			pterm.Println(pterm.BgRed.Sprint("E ", r.Action.GetStyledString(r.Resource)), err)
 		} else {
-			pterm.Println(pterm.FgGreen.Sprint("\u2713"), r.Action.StyledString(r.Resource))
+			pterm.Println(pterm.FgGreen.Sprint("\u2713"), r.Action.GetStyledString(r.Resource))
 		}
 	}
 	progress.Stop()

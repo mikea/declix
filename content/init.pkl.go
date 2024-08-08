@@ -7,4 +7,5 @@ func init() {
 	pkl.RegisterMapping("mikea.declix.Content#File", File{})
 	pkl.RegisterMapping("mikea.declix.Content#Url", Url{})
 	pkl.RegisterMapping("mikea.declix.Content#Base64", Base64{})
+	pkl.RegisterMapping("mikea.declix.Content#Hashed", Hashed{})
 }

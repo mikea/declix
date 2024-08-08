@@ -22,10 +22,10 @@ func HaveStyleStrings(expected string, current string, action string) types.Gome
 				"current state doesn't match\n    current styled string: %q\n    actual styled string: %q",
 				current, r.Current.GetStyledString())
 		}
-		if action != r.Action.StyledString(r.Resource) {
+		if action != r.Action.GetStyledString(r.Resource) {
 			return false, fmt.Errorf(
 				"action doesn't match\n    action styled string: %q\n    actual styled string: %q",
-				action, r.Action.StyledString(r.Resource))
+				action, r.Action.GetStyledString(r.Resource))
 		}
 		return true, nil
 	}).WithTemplate(

@@ -1,10 +1,10 @@
-@go.Package { name = "mikea/declix/resources/systemd" }
-abstract module mikea.declix.resources.systemd
+@go.Package { name = "mikea/declix/systemd" }
+abstract module mikea.declix.systemd
 
 import "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.8.0#/go.pkl" 
-import ".../Resources.pkl"
-import ".../filesystem/FileSystem.pkl"
-import ".../content/Content.pkl"
+import "../resources/Resources.pkl"
+import "../resources/filesystem/FileSystem.pkl"
+import "../content/Content.pkl"
 import "pkl:reflect"
 
 class UnitFile extends FileSystem.File {
@@ -20,8 +20,11 @@ class AfterAction {
 
 abstract class Unit extends Resources.Resource {
     name: String
+    user: String?
 
-    fixed systemctl: String = "sudo systemctl"
+    fixed systemctl: String = if (user != null) "sudo -u \(user) systemctl --user"
+        else "sudo systemctl"
+
     fixed _isEnabled: String = """
         if \(systemctl) is-enabled \(name) &> /dev/null; then
             echo "enabled = true"
@@ -36,39 +39,54 @@ abstract class Unit extends Resources.Resource {
             echo "active = false"
         fi
         """
-}
 
-class Service extends Unit {
-    type: "service"
-    state: ServiceState
-
-    fixed id: String = type + ":" + name
     fixed _stateCmd: String = """
         \(_isEnabled)
         \(_isActive)
         """
-    fixed _cmds: _ServiceStateScripts = state._cmds(this)
+
+    fixed _cmds: _UnitStateScripts = state._cmds(this)
 }
 
-class ServiceState {
+open class UnitState {
     enabled: Boolean?
     active: Boolean?
 
-    function _cmds(s: Service): _ServiceStateScripts = new {
+    function _enable(u: Unit): String = 
+        if (enabled) "\(u.systemctl) enable \(u.name)" 
+        else "\(u.systemctl) disable \(u.name)"
+
+    function _start(u: Unit): String =
+        if (active) "\(u.systemctl) start \(u.name)" 
+        else "\(u.systemctl) stop \(u.name)"
+
+    function _cmds(u: Unit): _UnitStateScripts = new {
         when (enabled != null) {
-            enable = if (enabled) "\(s.systemctl) enable \(s.name)" 
-                else "\(s.systemctl) disable \(s.name)"
+            enable = _enable(u)
         }
         when (active != null) {
-            start = if (active) "\(s.systemctl) start \(s.name)" 
-                else "\(s.systemctl) stop \(s.name)"
+            start = _start(u)
         }
     }
 }
 
-class _ServiceStateScripts {
+class _UnitStateScripts {
     enable: String?
     start: String?
+}
+
+class Service extends Unit {
+    type: "service"
+    state: UnitState
+
+    fixed id: String = type + ":" + name
+}
+
+class Socket extends Unit {
+    type: "socket"
+    state: UnitState
+
+    fixed id: String = type + ":" + name
 }
 
 abstract class Section {

@@ -48,7 +48,7 @@ th the desired state.`,
 		for _, r := range app.Resources {
 			if r.Action != nil {
 				tableData[actions+1] = []string{
-					r.Action.StyledString(r.Resource),
+					r.Action.GetStyledString(r.Resource),
 					r.Current.GetStyledString(),
 					r.Expected.GetStyledString()}
 				actions++

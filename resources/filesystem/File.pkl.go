@@ -10,7 +10,7 @@ type File interface {
 
 	GetId() string
 
-	GetDetermineStateCmd() string
+	GetStateCmd() string
 }
 
 var _ File = (*FileImpl)(nil)
@@ -22,7 +22,7 @@ type FileImpl struct {
 
 	Id string `pkl:"id"`
 
-	DetermineStateCmd string `pkl:"_determineStateCmd"`
+	StateCmd string `pkl:"_stateCmd"`
 
 	Path string `pkl:"path"`
 }
@@ -39,8 +39,8 @@ func (rcv *FileImpl) GetId() string {
 	return rcv.Id
 }
 
-func (rcv *FileImpl) GetDetermineStateCmd() string {
-	return rcv.DetermineStateCmd
+func (rcv *FileImpl) GetStateCmd() string {
+	return rcv.StateCmd
 }
 
 func (rcv *FileImpl) GetPath() string {

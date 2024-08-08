@@ -1,8 +1,6 @@
 // Code generated from Pkl module `mikea.declix.Content`. DO NOT EDIT.
 package content
 
-type Render interface {
-	GetResult() string
-
-	GetSha256() string
+type Hashed struct {
+	Sha256 string `pkl:"sha256"`
 }

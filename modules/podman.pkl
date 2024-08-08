@@ -1,5 +1,5 @@
 import ".../resources/Resources.pkl"
-import ".../resources/systemd/systemd.pkl"
+import ".../systemd/systemd.pkl"
 import ".../resources/filesystem/FileSystem.pkl"
 
 function run(r: Run): String = r.render()
@@ -124,7 +124,7 @@ function service(serviceName: String, r: Run): Listing<Resources.Resource> = new
                     environment = new {
                         ["PODMAN_SYSTEMD_UNIT"] = "%n"
                     }
-                    restart = "on-failure"
+                    restart = "always"
                     timeoutStopSec = 70
                     execStartPre = "/usr/bin/rm -f %t/%n.pid %t/%n.cid"
                     execStart = run((r) {

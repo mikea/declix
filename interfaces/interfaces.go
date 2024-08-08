@@ -9,8 +9,8 @@ type Resource interface {
 
 	ExpectedState() (State, error)
 	DetermineState(executor CommandExecutor) (State, error)
-	DetermineAction(state State, expectedState State) (Action, error)
-	RunAction(executor CommandExecutor, action Action, state State, expectedState State) error
+	DetermineAction(current State, expected State) (Action, error)
+	RunAction(executor CommandExecutor, action Action, current State, expected State) error
 }
 
 type State interface {
@@ -30,5 +30,5 @@ type CommandExecutor interface {
 }
 
 type Action interface {
-	StyledString(resource Resource) string
+	GetStyledString(resource Resource) string
 }

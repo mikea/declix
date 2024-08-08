@@ -1,9 +1,9 @@
-// Code generated from Pkl module `mikea.declix.resources.systemd`. DO NOT EDIT.
+// Code generated from Pkl module `mikea.declix.systemd`. DO NOT EDIT.
 package systemd
 
 import (
-	"mikea/declix/resources/systemd/serviceexittype"
-	"mikea/declix/resources/systemd/servicetype"
+	"mikea/declix/systemd/serviceexittype"
+	"mikea/declix/systemd/servicetype"
 )
 
 type ServiceSection interface {

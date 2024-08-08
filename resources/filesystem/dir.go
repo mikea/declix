@@ -19,7 +19,7 @@ type groupStateOutput struct {
 }
 
 func (d *DirImpl) DetermineState(executor interfaces.CommandExecutor) (interfaces.State, error) {
-	out, err := executor.Run(d.DetermineStateCmd)
+	out, err := executor.Run(d.StateCmd)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,6 @@ func (d *DirImpl) DetermineAction(s interfaces.State, e interfaces.State) (inter
 			return nil, nil
 		}
 		return ToCreate, nil
-
 	}
 
 	panic(fmt.Sprintf("wrong state %T", e))
@@ -66,43 +65,43 @@ func (d *DirImpl) RunAction(executor interfaces.CommandExecutor, a interfaces.Ac
 
 	switch action {
 	case ToCreate:
-		expected := e.(*DirPresentImpl)
-		out, err := executor.Run(fmt.Sprintf("sudo mkdir \"%s\"", d.Path))
+		expected := e.(NodePresent)
+		out, err := executor.Run(fmt.Sprintf("sudo mkdir \"%s\"", d.GetPath()))
 		if err != nil {
 			return fmt.Errorf("error creating group: %w\n%s", err, out)
 		}
-		if err = chown(executor, d.Path, expected.Owner); err != nil {
+		if err = chown(executor, d.GetPath(), expected.GetOwner()); err != nil {
 			return err
 		}
-		if err = chgrp(executor, d.Path, expected.Group); err != nil {
+		if err = chgrp(executor, d.GetPath(), expected.GetGroup()); err != nil {
 			return err
 		}
-		if err = chmod(executor, d.Path, expected.Permissions); err != nil {
+		if err = chmod(executor, d.GetPath(), expected.GetPermissions()); err != nil {
 			return err
 		}
 		return nil
 	case ToDelete:
-		out, err := executor.Run(fmt.Sprintf("sudo rm -df \"%s\"", d.Path))
+		out, err := executor.Run(fmt.Sprintf("sudo rm -df \"%s\"", d.GetPath()))
 		if err != nil {
 			return fmt.Errorf("error creating group: %w\n%s", err, out)
 		}
 		return nil
 	case ToUpdate:
-		current := s.(*DirPresentImpl)
-		expected := e.(*DirPresentImpl)
-		if current.Owner != expected.Owner {
-			if err := chown(executor, d.Path, expected.Owner); err != nil {
+		current := s.(NodePresent)
+		expected := e.(NodePresent)
+		if current.GetOwner() != expected.GetOwner() {
+			if err := chown(executor, d.GetPath(), expected.GetOwner()); err != nil {
 				return err
 			}
 
 		}
-		if current.Group != expected.Group {
-			if err := chgrp(executor, d.Path, expected.Group); err != nil {
+		if current.GetGroup() != expected.GetGroup() {
+			if err := chgrp(executor, d.GetPath(), expected.GetGroup()); err != nil {
 				return err
 			}
 		}
-		if current.Permissions != expected.Permissions {
-			if err := chmod(executor, d.Path, expected.Permissions); err != nil {
+		if current.GetPermissions() != expected.GetPermissions() {
+			if err := chmod(executor, d.GetPath(), expected.GetPermissions()); err != nil {
 				return err
 			}
 		}

@@ -11,14 +11,11 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// RunAction implements interfaces.Resource.
-func (f *FileImpl) RunAction(executor interfaces.CommandExecutor, a interfaces.Action, s interfaces.State, es interfaces.State) error {
-	expected := es.(state)
-
+func (f *FileImpl) RunAction(executor interfaces.CommandExecutor, a interfaces.Action, s interfaces.State, e interfaces.State) error {
 	action := a.(action)
 	switch action {
 	case ToCreate:
-		return f.upload(executor, expected)
+		return f.upload(executor, e.(*FilePresentImpl))
 	case ToDelete:
 		_, err := executor.Run(fmt.Sprintf("sudo rm -f %s", f.Path))
 		if err != nil {
@@ -26,14 +23,18 @@ func (f *FileImpl) RunAction(executor interfaces.CommandExecutor, a interfaces.A
 		}
 		return nil
 	case ToUpdate:
-		return f.update(executor, s.(state), expected)
+		return f.update(executor, s.(*FilePresentImpl), e.(*FilePresentImpl))
 	default:
 		panic(fmt.Sprintf("unexpected filesystem.action: %#v", action))
 	}
 }
 
-func (f *FileImpl) update(executor interfaces.CommandExecutor, current state, expected state) error {
-	if current.Sha256 != expected.Sha256 {
+func (f *FileImpl) update(executor interfaces.CommandExecutor, current *FilePresentImpl, expected *FilePresentImpl) error {
+	contentEqual, err := content.Equal(current.Content, expected.Content)
+	if err != nil {
+		return err
+	}
+	if !contentEqual {
 		return f.upload(executor, expected)
 	}
 	if current.Group != expected.Group {
@@ -59,7 +60,7 @@ func (f *FileImpl) openContent() (io.ReadCloser, int64, error) {
 	return content.Open(f.State.(*FilePresentImpl).Content)
 }
 
-func (f *FileImpl) upload(executor interfaces.CommandExecutor, expected state) error {
+func (f *FileImpl) upload(executor interfaces.CommandExecutor, expected *FilePresentImpl) error {
 	content, size, err := f.openContent()
 	if err != nil {
 		return err
@@ -90,54 +91,40 @@ func (f *FileImpl) upload(executor interfaces.CommandExecutor, expected state) e
 }
 
 // DetermineAction implements interfaces.Resource.
-func (f *FileImpl) DetermineAction(s interfaces.State, es interfaces.State) (interfaces.Action, error) {
-	expected := es.(state)
-	current := s.(state)
-
-	if expected.Present {
-		if current.Present {
-			if current.Sha256 != expected.Sha256 ||
-				current.Owner != expected.Owner ||
-				current.Group != expected.Group ||
-				current.Permissions != expected.Permissions {
-				return ToUpdate, nil
-			}
-
+func (f *FileImpl) DetermineAction(s interfaces.State, e interfaces.State) (interfaces.Action, error) {
+	switch expected := e.(type) {
+	case *resources.Missing:
+		if _, ok := s.(*resources.Missing); ok {
 			return nil, nil
 		}
-
+		return ToDelete, nil
+	case *FilePresentImpl:
+		if current, ok := s.(*FilePresentImpl); ok {
+			contentEqual, err := content.Equal(current.Content, expected.Content)
+			if err != nil {
+				return nil, err
+			}
+			if !contentEqual ||
+				expected.Owner != current.Owner ||
+				expected.Group != current.Group ||
+				expected.Permissions != current.Permissions {
+				return ToUpdate, nil
+			}
+			return nil, nil
+		}
 		return ToCreate, nil
 	}
 
-	if !current.Present {
-		return nil, nil
-	}
-
-	return ToDelete, nil
+	panic(fmt.Sprintf("wrong state %T", e))
 }
 
-// todo: use pkl instead
-type state struct {
-	Present     bool
-	Sha256      string
-	Owner       string
-	Group       string
-	Permissions string
-}
-
-// StyledString implements interfaces.ResouceStatus.
-func (s state) GetStyledString() string {
-	if !s.Present {
-		return pterm.FgRed.Sprint("missing")
-	} else {
-		return pterm.FgGreen.Sprint(s.Sha256[:8], " ", s.Owner, ":", s.Group, " ", s.Permissions)
-	}
+func (state *FilePresentImpl) GetStyledString() string {
+	return pterm.FgGreen.Sprint(content.CachedSha256(state.Content)[:8], " ", state.Owner, ":", state.Group, " ", state.Permissions)
 }
 
 type action int
 
-// StyledString implements interfaces.Action.
-func (a action) StyledString(resource interfaces.Resource) string {
+func (a action) GetStyledString(resource interfaces.Resource) string {
 	switch a {
 	case ToCreate:
 		return pterm.FgGreen.Sprint("+", resource.GetId())
@@ -155,42 +142,36 @@ const (
 	ToDelete
 )
 
+// todo: can we use pkl?
+type fileStateOutput struct {
+	Present     bool
+	Owner       string
+	Group       string
+	Permissions string
+	Sha256      string
+}
+
 // DetermineState implements interfaces.Resource.
 func (f *FileImpl) DetermineState(executor interfaces.CommandExecutor) (interfaces.State, error) {
-	out, err := executor.Run(f.DetermineStateCmd)
+	out, err := executor.Run(f.StateCmd)
 	if err != nil {
 		return nil, err
 	}
-	state := state{}
-	if err := yaml.Unmarshal([]byte(out), &state); err != nil {
+	output := fileStateOutput{}
+	if err := yaml.Unmarshal([]byte(out), &output); err != nil {
 		return nil, err
 	}
-	return state, nil
-}
 
-func (f *FileImpl) ExpectedState() (interfaces.State, error) {
-	switch s := f.State.(type) {
-	case *resources.Missing:
-		return state{
-			Present: false,
-		}, nil
-	case *FilePresentImpl:
-		sha256, err := content.Sha256(f.State.(*FilePresentImpl).Content)
-		if err != nil {
-			return nil, err
-		}
-
-		return state{
-			Present:     true,
-			Sha256:      sha256,
-			Owner:       s.Owner,
-			Group:       s.Group,
-			Permissions: s.Permissions,
-		}, nil
-
-	default:
-		panic(fmt.Sprintf("unsupported state %T", s))
-
+	if !output.Present {
+		return &resources.Missing{}, nil
 	}
 
+	return &FilePresentImpl{
+		Content:     &content.Hashed{Sha256: output.Sha256},
+		Owner:       output.Owner,
+		Group:       output.Group,
+		Permissions: output.Permissions,
+	}, nil
 }
+
+func (f *FileImpl) ExpectedState() (interfaces.State, error) { return f.State.(interfaces.State), nil }

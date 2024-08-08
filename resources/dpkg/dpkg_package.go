@@ -23,8 +23,7 @@ const (
 	ToRemove  Action = iota
 )
 
-// StyledString implements interfaces.Action.
-func (a Action) StyledString(resource interfaces.Resource) string {
+func (a Action) GetStyledString(resource interfaces.Resource) string {
 	switch a {
 	case ToInstall:
 		return pterm.FgGreen.Sprint("+", resource.GetId())
@@ -35,7 +34,7 @@ func (a Action) StyledString(resource interfaces.Resource) string {
 }
 
 // DetermineAction implements interfaces.Resource.
-func (p PackageImpl) DetermineAction(s interfaces.State, es interfaces.State) (interfaces.Action, error) {
+func (p *PackageImpl) DetermineAction(s interfaces.State, es interfaces.State) (interfaces.Action, error) {
 	state := s.(State)
 	expectedState := es.(State)
 
@@ -57,12 +56,12 @@ func DetermineAction(state State, expectedState State) (interfaces.Action, error
 }
 
 // DetermineState implements interfaces.Resource.
-func (p PackageImpl) DetermineState(executor interfaces.CommandExecutor) (interfaces.State, error) {
+func (p *PackageImpl) DetermineState(executor interfaces.CommandExecutor) (interfaces.State, error) {
 	return DeterminePackageState(executor, p.GetName())
 }
 
 // ExpectedStatusStyledString implements interfaces.Resource.
-func (p PackageImpl) ExpectedState() (interfaces.State, error) {
+func (p *PackageImpl) ExpectedState() (interfaces.State, error) {
 	return State{
 		Present: p.State == state.Installed,
 		Version: "",
@@ -139,7 +138,6 @@ func DeterminePackageState(executor interfaces.CommandExecutor, name string) (in
 	}, nil
 }
 
-// StyledString implements interfaces.ResouceStatus.
 func (s State) GetStyledString() string {
 	if s.Present {
 		if s.Version == "" {

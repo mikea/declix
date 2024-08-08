@@ -7,18 +7,11 @@ import (
 	"github.com/pterm/pterm"
 )
 
-func (s *ServiceImpl) ExpectedState() (interfaces.State, error) { return s.State, nil }
-
-func (s *ServiceImpl) DetermineState(executor interfaces.CommandExecutor) (interfaces.State, error) {
-	state := &ServiceState{}
-	if err := executor.Evaluate(s.StateCmd, state); err != nil {
-		return nil, err
-	}
-	return state, nil
+func (a *unitAction) empty() bool {
+	return a.enable == nil && a.start == nil
 }
 
-// StyledString implements interfaces.Action.
-func (a *action) StyledString(resource interfaces.Resource) string {
+func (a *unitAction) GetStyledString(resource interfaces.Resource) string {
 	var result = ""
 
 	if a.enable != nil {
@@ -40,20 +33,40 @@ func (a *action) StyledString(resource interfaces.Resource) string {
 	return result + resource.GetId()
 }
 
-func (a *action) empty() bool {
-	return a.enable == nil && a.start == nil
-}
-
-type action struct {
+type unitAction struct {
 	enable *bool
 	start  *bool
 }
 
-func (s *ServiceImpl) DetermineAction(c interfaces.State, e interfaces.State) (interfaces.Action, error) {
-	current := c.(*ServiceState)
-	expected := e.(*ServiceState)
+func (action *unitAction) Run(executor interfaces.CommandExecutor, r interfaces.Resource, c interfaces.State, e interfaces.State) error {
+	u := r.(Unit)
 
-	a := &action{}
+	if action.enable != nil {
+		if err := executor.Execute(*u.GetCmds().Enable); err != nil {
+			return err
+		}
+	}
+	if action.start != nil {
+		if err := executor.Execute(*u.GetCmds().Start); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func determineUnitState(u Unit, executor interfaces.CommandExecutor) (interfaces.State, error) {
+	state := &UnitStateImpl{}
+	if err := executor.Evaluate(u.GetStateCmd(), state); err != nil {
+		return nil, err
+	}
+	return state, nil
+}
+
+func determineUnitAction(c interfaces.State, e interfaces.State) (interfaces.Action, error) {
+	current := c.(*UnitStateImpl)
+	expected := e.(*UnitStateImpl)
+
+	a := &unitAction{}
 
 	if expected.Enabled != nil && *expected.Enabled != *current.Enabled {
 		a.enable = expected.Enabled
@@ -69,23 +82,7 @@ func (s *ServiceImpl) DetermineAction(c interfaces.State, e interfaces.State) (i
 	return a, nil
 }
 
-func (s *ServiceImpl) RunAction(executor interfaces.CommandExecutor, a interfaces.Action, c interfaces.State, e interfaces.State) error {
-	action := a.(*action)
-
-	if action.enable != nil {
-		if err := executor.Execute(*s.Cmds.Enable); err != nil {
-			return err
-		}
-	}
-	if action.start != nil {
-		if err := executor.Execute(*s.Cmds.Start); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (s *ServiceState) GetStyledString() string {
+func (s *UnitStateImpl) GetStyledString() string {
 	var result []string
 
 	if s.Enabled != nil {

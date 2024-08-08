@@ -11,13 +11,48 @@ import (
 	"strings"
 )
 
-func Sha256(pkl any) (string, error) {
+func CachedSha256(pkl Content) string {
 	if render, ok := pkl.(Render); ok {
-		s := render.GetResult()
-		return readAndHash(noCloseReadCloser{strings.NewReader(s)})
+		return render.GetSha256()
 	}
 
 	switch c := pkl.(type) {
+	case *Hashed:
+		return c.Sha256
+	case *File:
+		if c.Sha256 != nil {
+			return *c.Sha256
+		}
+		return "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+	case *Url:
+		if c.Sha256 != nil {
+			return *c.Sha256
+		}
+		return "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+	case *Base64:
+		if c.Sha256 != nil {
+			return *c.Sha256
+		}
+		panic("not implemented")
+	case string:
+		hash, err := readAndHash(noCloseReadCloser{strings.NewReader(c)})
+		if err != nil {
+			panic(fmt.Errorf("error computing string sha256 %w", err))
+		}
+		return hash
+	default:
+		panic(fmt.Sprintf("unsupported content %T", c))
+	}
+}
+
+func Sha256(pkl Content) (hash string, err error) {
+	if render, ok := pkl.(Render); ok {
+		return render.GetSha256(), nil
+	}
+
+	switch c := pkl.(type) {
+	case *Hashed:
+		return c.Sha256, nil
 	case *File:
 		if c.Sha256 != nil {
 			return *c.Sha256, nil
@@ -26,7 +61,11 @@ func Sha256(pkl any) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		return readAndHash(f)
+		hash, err = readAndHash(f)
+		if err != nil {
+			c.Sha256 = &hash
+		}
+		return hash, err
 	case *Url:
 		if c.Sha256 != nil {
 			return *c.Sha256, nil
@@ -35,7 +74,11 @@ func Sha256(pkl any) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		return readAndHash(resp.Body)
+		hash, err = readAndHash(resp.Body)
+		if err != nil {
+			c.Sha256 = &hash
+		}
+		return hash, err
 	case *Base64:
 		if c.Sha256 != nil {
 			return *c.Sha256, nil
@@ -106,4 +149,16 @@ func (noCloseReadCloser) Close() error {
 // Read implements io.ReadCloser.
 func (r noCloseReadCloser) Read(p []byte) (n int, err error) {
 	return r.reader.Read(p)
+}
+
+func Equal(a Content, b Content) (bool, error) {
+	aHash, err := Sha256(a)
+	if err != nil {
+		return false, err
+	}
+	bHash, err := Sha256(b)
+	if err != nil {
+		return false, err
+	}
+	return aHash == bHash, nil
 }

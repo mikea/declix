@@ -1,4 +1,4 @@
-// Code generated from Pkl module `mikea.declix.resources.systemd`. DO NOT EDIT.
+// Code generated from Pkl module `mikea.declix.systemd`. DO NOT EDIT.
 package systemd
 
 type Service interface {
@@ -6,13 +6,9 @@ type Service interface {
 
 	GetType() string
 
-	GetState() *ServiceState
+	GetState() UnitState
 
 	GetId() string
-
-	GetStateCmd() string
-
-	GetCmds() *ServiceStateScripts
 }
 
 var _ Service = (*ServiceImpl)(nil)
@@ -20,28 +16,30 @@ var _ Service = (*ServiceImpl)(nil)
 type ServiceImpl struct {
 	Type string `pkl:"type"`
 
-	State *ServiceState `pkl:"state"`
+	State UnitState `pkl:"state"`
 
 	Id string `pkl:"id"`
 
-	StateCmd string `pkl:"_stateCmd"`
-
-	Cmds *ServiceStateScripts `pkl:"_cmds"`
-
 	Name string `pkl:"name"`
+
+	User *string `pkl:"user"`
 
 	Systemctl string `pkl:"systemctl"`
 
 	IsEnabled string `pkl:"_isEnabled"`
 
 	IsActive string `pkl:"_isActive"`
+
+	StateCmd string `pkl:"_stateCmd"`
+
+	Cmds *UnitStateScripts `pkl:"_cmds"`
 }
 
 func (rcv *ServiceImpl) GetType() string {
 	return rcv.Type
 }
 
-func (rcv *ServiceImpl) GetState() *ServiceState {
+func (rcv *ServiceImpl) GetState() UnitState {
 	return rcv.State
 }
 
@@ -49,16 +47,12 @@ func (rcv *ServiceImpl) GetId() string {
 	return rcv.Id
 }
 
-func (rcv *ServiceImpl) GetStateCmd() string {
-	return rcv.StateCmd
-}
-
-func (rcv *ServiceImpl) GetCmds() *ServiceStateScripts {
-	return rcv.Cmds
-}
-
 func (rcv *ServiceImpl) GetName() string {
 	return rcv.Name
+}
+
+func (rcv *ServiceImpl) GetUser() *string {
+	return rcv.User
 }
 
 func (rcv *ServiceImpl) GetSystemctl() string {
@@ -71,4 +65,12 @@ func (rcv *ServiceImpl) GetIsEnabled() string {
 
 func (rcv *ServiceImpl) GetIsActive() string {
 	return rcv.IsActive
+}
+
+func (rcv *ServiceImpl) GetStateCmd() string {
+	return rcv.StateCmd
+}
+
+func (rcv *ServiceImpl) GetCmds() *UnitStateScripts {
+	return rcv.Cmds
 }

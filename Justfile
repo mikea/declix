@@ -67,7 +67,7 @@ pkl-gen-go:
     export PATH=$(pwd)/bin:$PATH && {{PKL_GEN_GO}} resources/apt/Apt.pkl --base-path mikea/declix
     export PATH=$(pwd)/bin:$PATH && {{PKL_GEN_GO}} resources/dpkg/Dpkg.pkl --base-path mikea/declix
     export PATH=$(pwd)/bin:$PATH && {{PKL_GEN_GO}} resources/users/Users.pkl --base-path mikea/declix
-    export PATH=$(pwd)/bin:$PATH && {{PKL_GEN_GO}} resources/systemd/systemd.pkl --base-path mikea/declix
+    export PATH=$(pwd)/bin:$PATH && {{PKL_GEN_GO}} systemd/systemd.pkl --base-path mikea/declix
     export PATH=$(pwd)/bin:$PATH && {{PKL_GEN_GO}} resources/filesystem/FileSystem.pkl --base-path mikea/declix
     export PATH=$(pwd)/bin:$PATH && {{PKL_GEN_GO}} content/Content.pkl --base-path mikea/declix
     export PATH=$(pwd)/bin:$PATH && {{PKL_GEN_GO}} resources/Resources.pkl --base-path mikea/declix

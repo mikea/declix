@@ -53,8 +53,7 @@ const (
 	groupDelete
 )
 
-// StyledString implements interfaces.Action.
-func (a groupAction) StyledString(resource interfaces.Resource) string {
+func (a groupAction) GetStyledString(resource interfaces.Resource) string {
 	switch a {
 	case groupCreate:
 		return pterm.FgGreen.Sprint("+", resource.GetId())
@@ -86,26 +85,26 @@ func (g *GroupImpl) DetermineAction(s interfaces.State, e interfaces.State) (int
 	panic(fmt.Sprintf("wrong state %T", e))
 }
 
-func (g *GroupImpl) RunAction(executor interfaces.CommandExecutor, a interfaces.Action, s interfaces.State, e interfaces.State) error {
+func (group *GroupImpl) RunAction(executor interfaces.CommandExecutor, a interfaces.Action, s interfaces.State, e interfaces.State) error {
 	action := a.(groupAction)
 
 	switch action {
 	case groupCreate:
 		expected := e.(*GroupPresent)
-		out, err := executor.Run(fmt.Sprintf("sudo groupadd -g %d %s", expected.Gid, g.Name))
+		out, err := executor.Run(fmt.Sprintf("sudo groupadd -g %d %s", expected.Gid, group.Name))
 		if err != nil {
 			return fmt.Errorf("error creating group: %w\n%s", err, out)
 		}
 		return nil
 	case groupDelete:
-		out, err := executor.Run(fmt.Sprintf("sudo groupdel %s", g.Name))
+		out, err := executor.Run(fmt.Sprintf("sudo groupdel %s", group.Name))
 		if err != nil {
 			return fmt.Errorf("error deleting group: %w\n%s", err, out)
 		}
 		return nil
 	case groupUpdate:
 		expected := e.(*GroupPresent)
-		out, err := executor.Run(fmt.Sprintf("sudo groupmod -g %d %s", expected.Gid, g.Name))
+		out, err := executor.Run(fmt.Sprintf("sudo groupmod -g %d %s", expected.Gid, group.Name))
 		if err != nil {
 			return fmt.Errorf("error updating group: %w\n%s", err, out)
 		}

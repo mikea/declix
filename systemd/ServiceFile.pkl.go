@@ -1,4 +1,4 @@
-// Code generated from Pkl module `mikea.declix.resources.systemd`. DO NOT EDIT.
+// Code generated from Pkl module `mikea.declix.systemd`. DO NOT EDIT.
 package systemd
 
 import "mikea/declix/content"
@@ -23,6 +23,8 @@ type ServiceFileImpl struct {
 	Service ServiceSection `pkl:"service"`
 
 	Result string `pkl:"_result"`
+
+	Sha256 string `pkl:"_sha256"`
 }
 
 func (rcv *ServiceFileImpl) GetUnit() UnitSection {
@@ -39,4 +41,8 @@ func (rcv *ServiceFileImpl) GetService() ServiceSection {
 
 func (rcv *ServiceFileImpl) GetResult() string {
 	return rcv.Result
+}
+
+func (rcv *ServiceFileImpl) GetSha256() string {
+	return rcv.Sha256
 }

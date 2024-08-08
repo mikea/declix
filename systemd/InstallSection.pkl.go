@@ -1,4 +1,4 @@
-// Code generated from Pkl module `mikea.declix.resources.systemd`. DO NOT EDIT.
+// Code generated from Pkl module `mikea.declix.systemd`. DO NOT EDIT.
 package systemd
 
 type InstallSection interface {
