@@ -14,7 +14,7 @@ jobs:
 
     - name: Install dependecies
       run: |
-        apt install --no-install-recommends --no-upgrade -y just gnupg libassuan-dev libgpgme-dev
+        apt install --no-install-recommends --no-upgrade -y just zip gnupg libassuan-dev libgpgme-dev
 
     - name: Checkout
       uses: actions/checkout@v4
