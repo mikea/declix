@@ -24,6 +24,8 @@ type ServiceImpl struct {
 
 	User *string `pkl:"user"`
 
+	FqName string `pkl:"fqName"`
+
 	Systemctl string `pkl:"systemctl"`
 
 	IsEnabled string `pkl:"_isEnabled"`
@@ -53,6 +55,10 @@ func (rcv *ServiceImpl) GetName() string {
 
 func (rcv *ServiceImpl) GetUser() *string {
 	return rcv.User
+}
+
+func (rcv *ServiceImpl) GetFqName() string {
+	return rcv.FqName
 }
 
 func (rcv *ServiceImpl) GetSystemctl() string {

@@ -22,18 +22,23 @@ abstract class Unit extends Resources.Resource {
     name: String
     user: String?
 
-    fixed systemctl: String = if (user != null) "sudo -u \(user) systemctl --user"
-        else "sudo systemctl"
+    fixed fqName: String = 
+        if (name.endsWith(".service") || name.endsWith(".timer") || name.endsWith(".socket") || name.endsWith(".mount")) 
+            throw("Unit '\(name)' name should not contain .type suffix")
+        else "\(name).\(type)" 
+
+    fixed systemctl: String = if (user != null) "sudo -u \(user) -i systemctl --user"
+        else "sudo -i systemctl"
 
     fixed _isEnabled: String = """
-        if \(systemctl) is-enabled \(name) &> /dev/null; then
+        if \(systemctl) is-enabled \(fqName) &> /dev/null; then
             echo "enabled = true"
         else
             echo "enabled = false"
         fi
         """
     fixed _isActive: String = """
-        if \(systemctl) is-active \(name) &> /dev/null; then
+        if \(systemctl) is-active \(fqName) &> /dev/null; then
             echo "active = true"
         else
             echo "active = false"
@@ -53,12 +58,12 @@ open class UnitState {
     active: Boolean?
 
     function _enable(u: Unit): String = 
-        if (enabled) "\(u.systemctl) enable \(u.name)" 
-        else "\(u.systemctl) disable \(u.name)"
+        if (enabled) "\(u.systemctl) enable \(u.fqName)" 
+        else "\(u.systemctl) disable \(u.fqName)"
 
     function _start(u: Unit): String =
-        if (active) "\(u.systemctl) start \(u.name)" 
-        else "\(u.systemctl) stop \(u.name)"
+        if (active) "\(u.systemctl) start \(u.fqName)" 
+        else "\(u.systemctl) stop \(u.fqName)"
 
     function _cmds(u: Unit): _UnitStateScripts = new {
         when (enabled != null) {

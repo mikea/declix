@@ -10,6 +10,8 @@ type Unit interface {
 
 	GetUser() *string
 
+	GetFqName() string
+
 	GetSystemctl() string
 
 	GetIsEnabled() string

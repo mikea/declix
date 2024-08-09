@@ -9,8 +9,8 @@ class Run {
     name: String?
     replace: Boolean?
     privileged: Boolean?
-    user: String?
-    group: String?
+    user: (String|UInt32)?
+    group: (String|UInt32)?
 
     ports: Listing<Port>
     volumes: Listing<Volume>
@@ -154,7 +154,7 @@ function service(serviceName: String, r: Run): Listing<Resources.Resource> = new
         }
     }
     new systemd.Service {
-        name = "\(serviceName).service"
+        name = "\(serviceName)"
         state = new {
             enabled = true
             active = true

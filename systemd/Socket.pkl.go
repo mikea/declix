@@ -24,6 +24,8 @@ type SocketImpl struct {
 
 	User *string `pkl:"user"`
 
+	FqName string `pkl:"fqName"`
+
 	Systemctl string `pkl:"systemctl"`
 
 	IsEnabled string `pkl:"_isEnabled"`
@@ -53,6 +55,10 @@ func (rcv *SocketImpl) GetName() string {
 
 func (rcv *SocketImpl) GetUser() *string {
 	return rcv.User
+}
+
+func (rcv *SocketImpl) GetFqName() string {
+	return rcv.FqName
 }
 
 func (rcv *SocketImpl) GetSystemctl() string {

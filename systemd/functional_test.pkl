@@ -21,7 +21,7 @@ resources {
         }
     }
     new systemd.Service {
-        name = "test1.service"
+        name = "test1"
         state = new {
             enabled = true
         }
