@@ -16,3 +16,4 @@ TODO:
 - Timer
 - Mount
 - automate `sudo loginctl enable-linger $otherUser`
+- unitFile doesnt support --user
