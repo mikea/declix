@@ -6,7 +6,7 @@ jobs:
     - name: Install system dependecies
       run: |
         apt update
-        apt install --no-install-recommends --no-upgrade -y git nodejs curl
+        apt install --no-install-recommends --no-upgrade -y git nodejs curl ca-certificates
 
     - name: Check connectivity
       run: |
