@@ -3,6 +3,7 @@ RESOURCES := "local/hamd.pkl"
 
 GOROOT := `go env GOROOT`
 GOPATH := `go env GOPATH`
+GO_OPTIONS := "-tags containers_image_openpgp"
 
 PKL_GEN_GO := GOPATH + "/bin/pkl-gen-go"
 
@@ -28,10 +29,10 @@ apply:
     export PATH=$(pwd)/bin:$PATH && go run main.go apply -t {{TARGET}} -r {{RESOURCES}}
 
 test: build
-    go test ./...
+    go test {{GO_OPTIONS}} ./...
 
 build:
-    go build -o bin/declix
+    go build {{GO_OPTIONS}} -o bin/declix
 
 release version: clean dist (build-release version) (gen-pkl version)
 
