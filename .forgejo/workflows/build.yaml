@@ -13,3 +13,9 @@ jobs:
       run: |
         sudo apt update
         sudo apt install --no-install-recommends --no-upgrade -y just
+
+    - name: Build
+      run: go build -v ./...
+
+    - name: Test
+      run: go test -v ./...
