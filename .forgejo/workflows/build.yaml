@@ -14,7 +14,7 @@ jobs:
 
     - name: Install dependecies
       run: |
-        apt install --no-install-recommends --no-upgrade -y just libgpgme-dev
+        apt install --no-install-recommends --no-upgrade -y just gnupg libassuan-dev libgpgme-dev
 
     - name: Checkout
       uses: actions/checkout@v4
@@ -27,7 +27,7 @@ jobs:
         go-version: '1.22'
 
     - name: Build
-      run: go build -v ./...
+      run: go build -tags containers_image_openpgp -v ./...
 
     - name: Test
-      run: go test -v ./...
+      run: go test -tags containers_image_openpgp -v ./...
