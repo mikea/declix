@@ -6,7 +6,7 @@ jobs:
     - name: Install system dependecies
       run: |
         apt update
-        apt install --no-install-recommends --no-upgrade -y git
+        apt install --no-install-recommends --no-upgrade -y git nodejs
 
     - name: Install dependecies
       run: |
