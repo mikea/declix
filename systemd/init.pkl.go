@@ -14,4 +14,6 @@ func init() {
 	pkl.RegisterMapping("mikea.declix.systemd#InstallSection", InstallSectionImpl{})
 	pkl.RegisterMapping("mikea.declix.systemd#ServiceSection", ServiceSectionImpl{})
 	pkl.RegisterMapping("mikea.declix.systemd#ServiceFile", ServiceFileImpl{})
+	pkl.RegisterMapping("mikea.declix.systemd#TimerSection", TimerSectionImpl{})
+	pkl.RegisterMapping("mikea.declix.systemd#TimerFile", TimerFileImpl{})
 }

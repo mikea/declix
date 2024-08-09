@@ -113,7 +113,7 @@ function service(serviceName: String, r: Run): Listing<Resources.Resource> = new
         path = "/etc/systemd/system/\(serviceName).service"
         state = new FileSystem.FilePresent {
             // https://www.redhat.com/sysadmin/podman-shareable-systemd-services
-            content = systemd.serviceFile(new systemd.ServiceFile {
+            content = new systemd.ServiceFile {
                 unit = new {
                     description = serviceName
                     wants = "network-online.target"
@@ -143,7 +143,7 @@ function service(serviceName: String, r: Run): Listing<Resources.Resource> = new
                 install = new {
                     wantedBy = "default.target"
                 }
-            })
+            }
             owner = "root"
             group = "root"
             permissions = "644"
