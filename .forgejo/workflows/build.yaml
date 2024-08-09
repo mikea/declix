@@ -1,6 +1,9 @@
 on: [push]
 jobs:
   test:
-    runs-on: docker
+    runs-on: ubuntu-24.04
+
     steps:
-      - run: echo All Good
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
