@@ -29,3 +29,10 @@ jobs:
     - name: Build
       run: just build
 
+    # TODO
+    # - name: Test
+    #   run: just test
+
+    - name: Release Artifacts
+      run: just release $(git describe --tags)
+
