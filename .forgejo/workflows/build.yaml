@@ -6,7 +6,11 @@ jobs:
     - name: Install system dependecies
       run: |
         apt update
-        apt install --no-install-recommends --no-upgrade -y git nodejs
+        apt install --no-install-recommends --no-upgrade -y git nodejs curl
+
+    - name: Check connectivity
+      run: |
+        curl -v https://forge.aizatsky.com/
 
     - name: Install dependecies
       run: |
