@@ -10,6 +10,8 @@ func init() {
 	pkl.RegisterMapping("mikea.declix.systemd#UnitState", UnitStateImpl{})
 	pkl.RegisterMapping("mikea.declix.systemd#Service", ServiceImpl{})
 	pkl.RegisterMapping("mikea.declix.systemd#Socket", SocketImpl{})
+	pkl.RegisterMapping("mikea.declix.systemd#Timer", TimerImpl{})
+	pkl.RegisterMapping("mikea.declix.systemd#Mount", MountImpl{})
 	pkl.RegisterMapping("mikea.declix.systemd#UnitSection", UnitSectionImpl{})
 	pkl.RegisterMapping("mikea.declix.systemd#InstallSection", InstallSectionImpl{})
 	pkl.RegisterMapping("mikea.declix.systemd#ServiceSection", ServiceSectionImpl{})

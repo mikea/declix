@@ -94,6 +94,20 @@ class Socket extends Unit {
     fixed id: String = type + ":" + name
 }
 
+class Timer extends Unit {
+    type: "timer"
+    state: UnitState
+
+    fixed id: String = type + ":" + name
+}
+
+class Mount extends Unit {
+    type: "mount"
+    state: UnitState
+
+    fixed id: String = type + ":" + name
+}
+
 abstract class Section {
     function render(): String = "[\(name)]\n" + new Listing {
         for (k, v in this.toMap()) {
